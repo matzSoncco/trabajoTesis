@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Modificar Equipo{% endblock %}
+
+{% block content %}
+<section class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h2 class="titulo text-center mb-4">Modificar Equipo</h2>
+                    <form method="post" class="formulario">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <style>
+                            .formulario label {
+                                color: black; /* Asegura que las etiquetas <label> tengan texto negro */
+                            }
+                        </style>
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary mr-2">Actualizar</button>
+                            <a href="{% url 'equipment_list' %}" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

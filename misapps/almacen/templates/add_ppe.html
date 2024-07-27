@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block title %}Agregar Equipo{% endblock %}
+
+{% block content %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Función para cargar la tabla de EPPs añadidos
+        function loadAddedPpeTable() {
+            $.ajax({
+                url: "{% url 'table_added_ppe' %}",
+                success: function(data) {
+                    $('#added-ppe-table-container').html(data);
+                }
+            });
+        }
+
+        // Función para cargar la tabla de EPPs creados
+        function loadCreatedPpeTable() {
+            $.ajax({
+                url: "{% url 'table_created_ppe' %}",
+                success: function(data) {
+                    $('#created-ppe-table-container').html(data);
+                }
+            });
+        }
+
+        // Cargar las tablas al cargar la página
+        loadAddedPpeTable();
+        loadCreatedPpeTable();
+
+        // Manejar el formulario de búsqueda para la tabla de EPPs creados
+        $('#search-form').submit(function(event) {
+            event.preventDefault();
+            var query = $('input[name="q"]').val();
+            $.ajax({
+                url: "{% url 'table_created_ppe' %}",
+                data: { q: query },
+                success: function(data) {
+                    $('#created-ppe-table-container').html(data);
+                }
+            });
+        });
+    });
+</script>
+<section class="principal-general">
+    <aside class="menu-lateral">
+        <div class="tarjeta-presentacion">
+            <div class="foto-perfil"><img src="../../static/img/perfil.png" alt=""></div>
+            <div class="nombre-perfil"><span>Nombre del almacenero</span></div>
+        </div>
+        <div class="menu-items-lateral">
+            <nav class="navegacion-lateral">
+                <div class="item-lateral">
+                    <a class="navbar-brand" href="{% url 'home' %}">Inicio</a>
+                </div>
+                <div class="item-lateral">
+                    <a class="navbar-brand" href="{% url 'home' %}">Personal Almacenero</a>
+                </div>
+                <div class="item-lateral">
+                    <a class="navbar-brand" href="{% url 'home' %}">Trabajadores</a>
+                </div>
+                <div class="item-lateral">
+                    <a class="navbar-brand" href="{% url 'home' %}">Duración de EPPs</a>
+                </div>
+            </nav>
+        </div>
+    </aside>
+    <section class="contendor-lateral-derecho">
+        <nav class="navegacion-link-formularios-top">
+            <a class="link-form" href="{% url 'add_ppe' %}">EPPs</a>
+            <a class="link-form" href="{% url 'create_tool' %}">Herramientas</a>
+            <a class="link-form" href="{% url 'create_equipment' %}">Equipos</a>
+            <a class="link-form" href="{% url 'create_material' %}">Materiales</a>
+        </nav>
+        <div class="contenedor-formulario">
+            <div class="top-form">
+                <h2 class="titulo-primario">Añadir de Equipos de Protección Personal</h2>
+                <a class="link-top-form" href="{% url 'table_added_ppe' %}">Ver tabla</a>
+            </div>
+            <div class="centrado">
+                <div class="formulario-contenedor-individual">
+                    <form method="post" action="{% url 'add_ppe' %}" enctype="multipart/form-data" class="box">
+                        {% csrf_token %}
+                        <div class="fila-form">
+                            <div class="campo">
+                                <label for="" class="label">N° de Guía</label>
+                                {{ form.guideNumber }}
+                            </div>
+                            <div class="campo">
+                                <label for="" class="label">Fecha</label>
+                                {{ form.creationDate }}
+                            </div>
+                        </div>
+        
+                        <div class="fila-form">
+                            <div class="campo">
+                                <label for="" class="label">Nombre</label>
+                                {{ form.name }}
+                            </div>
+                        </div>
+        
+                        <div class="fila-form">
+                            <div class="campo">
+                                <label for="" class="label">Costo Uitario</label>
+                                {{ form.unitCost }}
+                            </div>
+                            <div class="campo">
+                                <label for="" class="label">Cantidad</label>
+                                {{ form.quantity }}
+                            </div>
+                        </div>
+        
+                        <div class="campo-botones">
+                            <button class="form-btn aceptar-btn" type="submit">Añadir</button>
+                            <button class="form-btn cancelar-btn" type="button" onclick="location.href='{% url 'home' %}'">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="tabla-creacion" id="added-ppe-table-container">
+                    <h2 class="titulo-primario">Añadidos</h2>
+
+                </div>
+            </div>
+            <div class="tabla-creacion" id="created-ppe-table-container">
+                    
+            </div>
+        </div>
+    </section>
+</section>
+{% endblock %}

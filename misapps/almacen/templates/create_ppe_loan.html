@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Asignar EPPs{% endblock %}
+
+{% block content %}
+<div class="contenedor-general">
+    <div class="contenedor-formulario">
+        <div class="centrado">
+            <h2 class="texto-subtitulo">Asignar EPPs</h2>
+            <form method="post" action="{% url 'create_ppe_loan' %}" class="box">
+                {% csrf_token %}
+                
+                <div class="fila-form">
+                    <div class="campo">
+                        <label for="worker" class="label">Trabajador</label>
+                        {{ form.worker }}
+                    </div>
+                    <div class="campo">
+                        <label for="manager" class="label">Nombre del Responsable</label>
+                        {{ form.manager }}
+                    </div>
+                </div>
+
+                <div class="fila-form">
+                    <div class="campo">
+                        <label for="loanDate" class="form-label">Fecha de Préstamo</label>
+                        {{ form.loanDate }}
+                    </div>
+                    <div class="campo">
+                        <label for="newLoanDate" class="label">Fecha de Nueva Entrega</label>
+                        {{ form.newLoanDate }}
+                    </div>
+                </div>
+
+                <div class="campo">
+                    <label for="description" class="label">Descripción</label>
+                    {{ form.description }}
+                </div>
+                
+                <h3 class="texto-subtitulo">Detalles del Préstamo</h3>
+
+                <div id="ppe-loan-details" class="mb-3">
+                    {{ formset.management_form }}
+                    {% for form in formset %}
+                        <div class="fila-form" data-form-index="{{ forloop.counter0 }}">
+                            <div class="campo">
+                                <label for="{{ form.ppe.id_for_label }}" class="label">EPP</label>
+                                {{ form.ppe }}
+                            </div>
+
+                            <div class="campo">
+                                <label for="{{ form.quantity.id_for_label }}" class="label">Cantidad</label>
+                                {{ form.quantity }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="campo-botones">
+                    <button type="button" class="form-btn agregar-btn" onclick="addForm()">Agregar Otro EPP</button>
+                    <button type="submit" class="form-btn aceptar-btn">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+      function addForm() {
+          let formContainer = document.querySelector('#ppe-loan-details');
+          let formCount = formContainer.querySelectorAll('.row').length;
+          
+          // Clona la primera fila de formulario
+          let newForm = formContainer.querySelector('.row').cloneNode(true);
+          
+          // Actualiza los IDs y nombres de los elementos en el nuevo formulario
+          newForm.querySelectorAll('input, select').forEach(function(input) {
+              let nameRegex = /-(\d+)-/;
+              input.name = input.name.replace(nameRegex, '-${formCount}-');
+              input.id = input.id.replace(nameRegex, '-${formCount}-');
+              if (input.type !== 'hidden') { 
+                input.value = ''; // Limpia el valor de los campos de entrada
+              }
+          });
+
+          // Añade el nuevo formulario al contenedor
+          formContainer.appendChild(newForm);
+          
+          // Actualiza el total de formularios
+          let totalFormsField = document.querySelector('input[name="details-TOTAL_FORMS"]');
+          if (totalFormsField) {
+            totalFormsField.value = formCount + 1;
+          } else {
+            console.error('No se encontró el campo TOTAL_FORMS');
+          }
+      }
+      
+      // Asigna el evento al botón
+      document.getElementById('add-form-btn').addEventListener('click', addForm);
+  });
+</script>
+{% endblock %}

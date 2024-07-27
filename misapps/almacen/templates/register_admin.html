@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Register Admin{% endblock %}
+
+{% block content %}
+<div class="contenedor-general">
+    <div class="contenedor-formulario">
+        <div class="centrado">
+            <form method="post" action="." class="box">
+                {% csrf_token %}
+
+                <div class="campo">
+                    <label for="name" class="label">Nombres y Apellidos</label>
+                    {{ form.name}}
+                </div>
+                
+                <div class="campo">
+                    <label for="email" class="label">Correo</label>
+                    {{ form.email }}
+                </div>
+
+                <div class="campo">
+                    <label for="phoneNumber" class="label">Número de Celular</label>
+                    {{ form.phoneNumber }}
+                </div>
+
+                <div class="campo">
+                    <label for="dni" class="label">DNI</label>
+                    {{ form.dni }}
+                </div>
+
+                <div class="campo">
+                    <label for="username" class="label">Nombre de usuario</label>
+                    {{ form.username }}
+                </div>
+
+                <div class="campo">
+                    <label for="password1" class="label">Contraseña</label>
+                    {{ form.password1 }}
+                </div>
+
+                <div class="campo">
+                    <label for="password2" class="label">Confirmar contraseña</label>
+                    {{ form.password2 }}
+                </div>
+
+                <div class="campo-botones">
+                    <button class="form-btn aceptar-btn" type="submit">Crear cuenta</button>
+                    <button class="form-btn cancelar-btn" type="button">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

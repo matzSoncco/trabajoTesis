@@ -1,0 +1,41 @@
+<form method="post" action="{% url 'modify_ppe' epp.idPpe %}" enctype="multipart/form-data" class="box">
+    {% csrf_token %}
+    <div class="fila-form">
+        <div class="campo">
+            <label for="" class="label">N° de Guía</label>
+            {{ form.guideNumber }}
+        </div>
+        <div class="campo">
+            <label for="" class="label">Fecha</label>
+            {{ form.creationDate }}
+        </div>
+    </div>
+
+    <div class="fila-form">
+        <div class="campo">
+            <label for="" class="label">Nombre</label>
+            {{ form.name }}
+        </div>
+    </div>
+
+    <div class="fila-form">
+        <div class="campo">
+            <label for="" class="label">Costo Uitario</label>
+            {{ form.unitCost }}
+        </div>
+        <div class="campo">
+            <label for="" class="label">Cantidad</label>
+            {{ form.quantity }}
+        </div>
+    </div>
+
+    <div class="campo">
+        <label for="" class="label">Duración</label>
+        {{ form.duration }}
+    </div>
+
+    <div class="campo-botones">
+        <button class="form-btn aceptar-btn" type="submit">Añadir</button>
+        <button class="form-btn cancelar-btn" type="button" onclick="location.href='{% url 'home' %}'">Cancelar</button>
+    </div>
+</form>

@@ -1,0 +1,48 @@
+from django.db import models
+from django.core.validators import MinValueValidator
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
+
+class Tool(models.Model):
+    idTool = models.CharField(verbose_name=_('ID'), primary_key=True, editable=False, max_length=10)
+    name = models.CharField(verbose_name=_('Nombre'), null=False, max_length=20)
+    quantity = models.IntegerField(verbose_name=_('Cantidad'), validators=[MinValueValidator(0)], null=False, default=0)
+    LEVELS = [
+        (-1, 'Elija un nivel'),
+        (1, 'Bajo'),
+        (2, 'Medio'),
+        (3, 'Mayor')
+    ]
+    level = models.IntegerField(verbose_name=_('Nivel'), null=False, choices=LEVELS, default=-1)
+    stock = models.IntegerField(null=False, default=0)
+    guideNumber = models.IntegerField(verbose_name=_('Número de Guía'), null=False, default=0)
+    image = models.ImageField(upload_to='uploads/', blank=True, null=True)
+    creationDate = models.DateField(auto_now_add=False, blank=False, null=False)
+
+    def get_level_display(self):
+        return dict(self.LEVELS).get(self.level, 'Desconocido')
+    
+    def clean(self):
+        if self.level == -1:
+            raise ValidationError(_('Debe seleccionar un nivel válido.'))
+    
+    def save(self, *args, **kwargs):
+        if not self.idTool or not self.idTool.startswith('H-'):
+            # Obtiene el número autoincrementable
+            last_id = Tool.objects.all().order_by('-idTool').first()
+            if last_id:
+                # Intenta obtener el número del último idTool
+                try:
+                    last_id_number = int(last_id.idTool.split('-')[1]) + 1
+                except IndexError:
+                    # Si hay un IndexError, asigna 1 como el siguiente número
+                    last_id_number = 1
+            else:
+                last_id_number = 1
+            
+            self.idTool = f'H-{last_id_number:04}'  # '04' asegura que siempre tenga 4 dígitos
+        
+        super(Tool, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return "%s %s %s %s %s" %(self.idTool, self.name, self.quantity, self.level, self.stock)

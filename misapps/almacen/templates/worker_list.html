@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Trabajadores{% endblock %}
+
+{% block content %}
+<section class="container mt-4">
+    <div class="row mb-4">
+        <div class="col text-center">
+            <h2 class="titulo display-4">Trabajadores</h2>
+        </div>
+    </div>
+    <nav class="row justify-content-between mb-4">
+        <div class="col-md-6">
+            <form class="form-inline" method="get" action="{% url 'worker_list' %}">
+                <input type="text" class="form-control mr-2" name="q" placeholder="Buscar por nombre" value="{{ query|default_if_none:'' }}">
+                <button class="btn btn-primary" type="submit">Buscar</button>
+            </form>
+        </div>
+        <div class="col-md-6 text-right">
+            <ul class="list-inline">
+                <li class="list-inline-item"><a href="{% url 'add_worker' %}" class="btn btn-success">Agregar Trabajador</a></li>
+            </ul>
+        </div>
+    </nav>
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered tablaEPP">
+            <thead class="thead-dark">
+                <tr>
+                    <th>DNI</th>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Cargo</th>
+                    <th>Fecha de Contrato</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in workers %}
+                <tr>
+                    <td>{{ item.dni }}</td>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.surname }}</td>
+                    <td>{{ item.position }}</td>
+                    <td>{{ item.contractDate }}</td>
+                    <td>{{ item.status }}</td>
+                    <td>
+                        <a href="{% url 'modify_worker' item.dni %}" class="btn btn-info btn-sm">Editar</a>
+                        <a  class="btn btn-danger btn-sm"
+                            onclick="openDeleteWindow(this)"
+                            data-url="{% url 'delete_worker' item.dni %}"
+                            data-id="{{ item.dni }}"
+                        >Eliminar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+<script>
+    function openDeleteWindow(button) {
+        const deleteUrl = button.getAttribute('data-url');
+        const deleteId = button.getAttribute('data-id');
+        const rowToDelete = button.closest('tr');
+    
+        const confirmation = confirm("¿Estás seguro que deseas eliminar al Trabajador?");
+        if (confirmation) {
+            fetch(deleteUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'), // Asegúrate de tener esta función para obtener el token CSRF
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ id: deleteId })
+            })
+            .then(response => {
+                if (response.ok) {
+                    rowToDelete.remove(); // Elimina la fila de la tabla
+                } else {
+                    alert("Hubo un problema al intentar eliminar al Trabajador.");
+                }
+            })
+            .catch(error => console.error('Error al eliminar:', error));
+        }
+    }
+    
+    // Función auxiliar para obtener el token CSRF
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Buscar el token CSRF en las cookies
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}
