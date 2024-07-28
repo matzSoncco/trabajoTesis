@@ -1,0 +1,67 @@
+<script>
+    $('.save-duration-btn').on('click', function(e) {
+            e.preventDefault(); // Prevenir cualquier acción por defecto del botón
+            
+            console.log('Botón clickeado'); // Para verificar si el evento se está capturando
+            
+            var row = $(this).closest('tr');
+            var ppeId = row.data('ppe-id');
+            var newDuration = row.find('.editable-duration').text();
+            
+            console.log('PPE ID:', ppeId);
+            console.log('Nueva duración:', newDuration);
+
+            $.ajax({
+                url: "{% url 'update_ppe_duration' %}",
+                method: 'POST',
+                data: {
+                    'ppe_id': ppeId,
+                    'duration': newDuration,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    console.log("Respuesta del servidor:", response);
+                    if (response.success) {
+                        alert('Duración actualizada con éxito');
+                    } else {
+                        alert('Error al actualizar la duración: ' + (response.error || 'Error desconocido'));
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error de AJAX:", status, error);
+                    alert('Error de conexión: ' + error);
+                }
+            });
+        });
+
+        // Opcional: resaltar la celda cuando se está editando
+        $('.editable-duration').focus(function() {
+            $(this).addClass('editing');
+        }).blur(function() {
+            $(this).removeClass('editing');
+        });
+</script>
+<table class="tabla" id="duration-table">
+    <thead>
+        <tr>
+            <th>Codigo</th>
+            <th>Nombre</th>
+            <th>Duracion</th>
+            <th>Acción</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ppe in epp %}
+            <tr data-ppe-id="{{ ppe.idPpe }}">
+                <td>{{ ppe.idPpe }}</td>
+                <td>{{ ppe.name }}</td>
+                <td class="editable-duration" contenteditable="true">{{ ppe.duration }}</td>
+                <td><button class="save-duration-btn"><img class="icono-btn" src="../../../static/img/anadir.png" alt=""></button></td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="4">No hay EPPs disponibles.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

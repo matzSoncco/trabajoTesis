@@ -5,7 +5,6 @@ from .Unit import Unit
 
 class Ppe(models.Model):
     idPpe = models.CharField(primary_key=True, editable=False, max_length=10)
-    #idPpeOperation = models.PositiveIntegerField(editable=False, unique=True)
     name = models.CharField(null=False, max_length=20, unique=True)
     quantity = models.IntegerField(
         validators=[MinValueValidator(0), MaxValueValidator(99999)],
@@ -17,7 +16,7 @@ class Ppe(models.Model):
     guideNumber = models.IntegerField(null=False, default=0)
     stock = models.IntegerField(null=False, default=0)
     unit = models.ForeignKey(Unit, on_delete=models.SET_NULL, null=True)
-    duration = models.IntegerField(null=False, default=1)
+    duration = models.IntegerField(null=False, default=0, editable=True)
     image = models.ImageField(upload_to='uploads/', blank=True, null=True)
     creationDate = models.DateField(auto_now_add=False, blank=False, null=True)
 

@@ -28,6 +28,10 @@ class AdminLoginForm(AuthenticationForm):
         "placeholder": "Ingrese su contraseña"
     }))
 
+    class Meta:
+        model = User
+        fields = ['username', 'password']
+
 
 class AdminSignUpForm(UserCreationForm):
     name = forms.CharField(widget=forms.TextInput(attrs={
@@ -295,13 +299,42 @@ class ToolForm(forms.ModelForm):
         self.fields['image'].required = False
 
 class WorkerForm(forms.ModelForm):
+    dni = forms.CharField(widget=forms.TextInput(attrs={
+        "class": "input",
+        "type": "text",
+        "placeholder": "Ingrese su número de DNI"
+    }), max_length=8)
+
+    workerStatus = forms.BooleanField(widget=forms.CheckboxInput(attrs={
+        'class': 'input',
+        'type': 'checkbox'
+    }))
+
     class Meta:
         model = Worker
         fields = ['dni', 'name', 'surname', 'position', 'contractDate', 'workerStatus']
         widgets = {
-            'contractDate': forms.DateInput(attrs={'type': 'date'}),
-            'workerStatus': forms.CheckboxInput(attrs={'class': 'status-checkbox'}),
+            'name': forms.TextInput(attrs={
+                'class': 'input',
+                'type': 'text',
+                'placeholder': 'Ingrese los nombres'
+            }),
+            'surname': forms.TextInput(attrs={
+                'class': 'surname-input',
+                'type': 'text',
+                'placeholder': 'Ingrese los apellidos'
+            }),
+            'position': forms.TextInput(attrs={
+                'class': 'input',
+                'type': 'text',
+                'placeholder': 'Ingrese su cargo'
+            }),
+            'contractDate': forms.DateInput(attrs={
+                'class': 'input',
+                'type': 'date'
+            }),
         }
+
 
 class LoanForm(forms.ModelForm):
     material = forms.ModelChoiceField(label='Material', queryset=Material.objects.all(), required=True)

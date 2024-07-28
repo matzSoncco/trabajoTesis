@@ -4,6 +4,9 @@ from django.contrib.auth import logout
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.decorators import login_required
 from django.forms import inlineformset_factory
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+import logging
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Sum
@@ -17,9 +20,51 @@ from .models.Loan import Loan
 from .models.Tool import Tool
 from .forms import AdminSignUpForm, PpeForm, MaterialForm, WorkerForm, EquipmentForm, ToolForm, LoanForm, PpeLoanForm, Ppe, ExceptionPpeLoanForm, PpeLoanDetailForm, PpeLoanDetailForm, CreatePpeForm
 
+
+logger = logging.getLogger(__name__)
+
 # Create your views here.
 def home(request):
     return render(request, 'home.html')
+
+#DURACIÓN
+@login_required
+def set_duration(request):
+    form = PpeForm()
+    return render(request, 'show_duration_table.html', {'form': form})
+
+@require_POST
+@csrf_exempt  # Solo para pruebas, eliminar en producción
+def update_ppe_duration(request):
+    ppe_id = request.POST.get('ppe_id')
+    new_duration = request.POST.get('duration')
+    
+    logger.info(f"Recibida solicitud de actualización: PPE ID {ppe_id}, Nueva duración {new_duration}")
+    
+    try:
+        ppe = Ppe.objects.get(idPpe=ppe_id)
+        logger.info(f"PPE encontrado: {ppe}")
+        
+        ppe.duration = new_duration
+        ppe.save()
+        
+        logger.info(f"PPE actualizado: {ppe}")
+        return JsonResponse({'success': True})
+    except Ppe.DoesNotExist:
+        logger.error(f"PPE no encontrado: ID {ppe_id}")
+        return JsonResponse({'success': False, 'error': 'PPE not found'})
+    except Exception as e:
+        logger.error(f"Error al actualizar PPE: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)})
+    
+@login_required
+def show_duration(request):
+    query = request.GET.get('q', '')
+    if query:
+        epp = Ppe.objects.filter(name__icontains=query)
+    else:
+        epp = Ppe.objects.all()
+    return render(request, 'table_duration_ppe.html', {'epp': epp, 'query': query})
 
 #PPE
 @login_required
@@ -286,8 +331,10 @@ def create_worker(request):
     if request.method == 'POST':
         form = WorkerForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect('worker_list')
+            worker = form.save()
+            return JsonResponse({'success': True, 'message': 'Trabajador creado con éxito'})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors})
     else:
         form = WorkerForm()
     return render(request, 'create_worker.html', {'form': form})

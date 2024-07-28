@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Agregar Equipo{% endblock %}
+
+{% block content %}
+<style>
+    .editable-duration {
+        padding: 5px;
+        border: 1px solid transparent;
+    }
+    .editable-duration:hover {
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+    }
+    .editable-duration.editing {
+        background-color: #fff;
+        border: 1px solid #007bff;
+        box-shadow: 0 0 5px rgba(0,123,255,0.5);
+    }
+</style>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        console.log('Documento listo');
+        // Función para cargar la tabla de EPPs añadidos
+        function loadDurationPpe() {
+            $.ajax({
+                url: "{% url 'table_duration_ppe' %}",
+                success: function(data) {
+                    $('#duration-table-container').html(data);
+                }
+            });
+        }
+
+        // Cargar las tablas al cargar la página
+        loadDurationPpe();
+
+        // Manejar el formulario de búsqueda para la tabla de EPPs creados
+        $('#search-form').submit(function(event) {
+            event.preventDefault();
+            var query = $('input[name="q"]').val();
+            $.ajax({
+                url: "{% url 'table_duration_ppe' %}",
+                data: { q: query },
+                success: function(data) {
+                    $('#duration-table-container').html(data);
+                }
+            });
+        });
+    });
+</script>
+<section class="principal-general">
+    <aside class="menu-lateral">
+        <div class="tarjeta-presentacion">
+            <div class="foto-perfil"><img src="../../../static/img/perfil.png" alt=""></div>
+            <div class="nombre-perfil"><span>Nombre del almacenero</span></div>
+        </div>
+        <div class="menu-items-lateral">
+            <nav class="navegacion-lateral">
+                <div class="item-lateral">
+                    <a class="navbar-brand" href="{% url 'home' %}">Inicio</a>
+                </div>
+                <div class="item-lateral">
+                    <a class="navbar-brand" href="{% url 'home' %}">Personal Almacenero</a>
+                </div>
+                <div class="item-lateral">
+                    <a class="navbar-brand" href="{% url 'home' %}">Trabajadores</a>
+                </div>
+                <div class="item-lateral">
+                    <a class="navbar-brand" href="{% url 'home' %}">Duración de EPPs</a>
+                </div>
+            </nav>
+        </div>
+    </aside>
+    <section class="contendor-lateral-derecho">
+        <div class="titulo-pagina">
+            <h2>Tabla de duracion de EPP</h2>
+        </div>
+        <div class="tabla-creacion" id="duration-table-container">
+                    
+        </div>
+    </section>
+</section>
+{% endblock %}

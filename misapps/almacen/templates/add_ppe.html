@@ -4,7 +4,6 @@
 
 {% block content %}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
         // Función para cargar la tabla de EPPs añadidos
@@ -63,7 +62,7 @@
                     <a class="navbar-brand" href="{% url 'home' %}">Trabajadores</a>
                 </div>
                 <div class="item-lateral">
-                    <a class="navbar-brand" href="{% url 'home' %}">Duración de EPPs</a>
+                    <a class="navbar-brand" href="{% url 'show_duration_table' %}">Duración de EPPs</a>
                 </div>
             </nav>
         </div>
