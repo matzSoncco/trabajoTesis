@@ -1,7 +1,5 @@
-from typing import Any
 from django import forms
 from django.core.exceptions import ValidationError
-from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .models.Ppe import Ppe
 from .models.PpeLoan import PpeLoan, PpeLoanDetail
@@ -11,6 +9,7 @@ from .models.Tool import Tool
 from .models.Worker import Worker
 from .models.Loan import Loan
 from .models.Unit import Unit
+from django.contrib.auth.models import User
 
 class AdminLoginForm(AuthenticationForm):
     def __init__(self, *args, **kwargs):
@@ -22,7 +21,7 @@ class AdminLoginForm(AuthenticationForm):
         "placeholder": "Ingrese su nombre de usuario"
     }), max_length=150)
 
-    password = forms.CharField(widget=forms.TextInput(attrs={
+    password = forms.CharField(widget=forms.PasswordInput(attrs={
         "class": "input",
         "type": "password",
         "placeholder": "Ingrese su contraseña"
@@ -34,10 +33,16 @@ class AdminLoginForm(AuthenticationForm):
 
 
 class AdminSignUpForm(UserCreationForm):
-    name = forms.CharField(widget=forms.TextInput(attrs={
+    first_name = forms.CharField(widget=forms.TextInput(attrs={
         "class": "input",
         "type": "text",
-        "placeholder": "Ingrese sus nombres y apellidos"
+        "placeholder": "Ingrese sus nombres"
+    }), max_length=150,)
+
+    last_name = forms.CharField(widget=forms.TextInput(attrs={
+        "class": "input",
+        "type": "text",
+        "placeholder": "Ingrese sus apellidos"
     }), max_length=150,)
 
     username = forms.CharField(widget=forms.TextInput(attrs={
@@ -46,31 +51,19 @@ class AdminSignUpForm(UserCreationForm):
         "placeholder": "Cree su nombre de Usuario"
     }), max_length=150)
 
-    email = forms.CharField(widget=forms.TextInput(attrs={
+    email = forms.EmailField(widget=forms.TextInput(attrs={
         "class": "input",
         "type": "email",
         "placeholder": "Ingrese su correo"
     }), max_length=150)
 
-    phoneNumber = forms.CharField(widget=forms.TextInput(attrs={
-        "class": "input",
-        "type": "text",
-        "placeholder": "Ingrese su número de celular"
-    }), max_length=9)
-
-    dni = forms.CharField(widget=forms.TextInput(attrs={
-        "class": "input",
-        "type": "text",
-        "placeholder": "Ingrese su número de DNI"
-    }), max_length=8)
-
-    password1 = forms.CharField(widget=forms.TextInput(attrs={
+    password1 = forms.CharField(widget=forms.PasswordInput(attrs={
         "class": "input",
         "type": "password",
         "placeholder": "Cree una contraseña"
     }))
 
-    password2 = forms.CharField(widget=forms.TextInput(attrs={
+    password2 = forms.CharField(widget=forms.PasswordInput(attrs={
         "class": "input",
         "type": "password",
         "placeholder": "Ingrese la contraseña nuevamente"
@@ -78,7 +71,7 @@ class AdminSignUpForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ('name', 'username', 'email', 'phoneNumber', 'dni', 'password1', 'password2')
+        fields = ('first_name', 'last_name', 'username', 'email', 'password1', 'password2')
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -128,44 +121,44 @@ class PpeForm(forms.ModelForm):
     name = forms.CharField(widget=forms.TextInput(attrs={
         "class": "input",
         "type": "text",
-        "placeholder": "Ingrese el nombre del EPP"
+        "placeholder": "Ingrese el nombre del EPP",
+        "id": "id_name"
     }))
 
     unitCost = forms.FloatField(widget=forms.NumberInput(attrs={
         "class": "input",
         "type": "number",
-        "placeholder": "Ingrese el costo unitario"
+        "placeholder": "Ingrese el costo unitario",
+        "id": "id_unitCost"
     }))
 
     stock = forms.IntegerField(widget=forms.NumberInput(attrs={
         "class": "input",
         "type": "number",
-        "placeholder": "Ingrese el stock ideal"
-    }))
-
-    duration = forms.IntegerField(widget=forms.NumberInput(attrs={
-        "class": "input",
-        "type": "number",
-        "placeholder": "Ingrese la duracion del EPP"
+        "placeholder": "Ingrese el stock ideal",
+        "id": "id_stock"
     }))
 
     guideNumber = forms.CharField(widget=forms.TextInput(attrs={
         "class": "input",
         "type": "text",
-        "placeholder": "Ingrese la el número de guía"
+        "placeholder": "Ingrese la el número de guía",
+        "id": "id_guideNumber"
     }))
     
     quantity = forms.IntegerField(widget=forms.NumberInput(attrs={
         "class": "input",
         "type": "number",
         "placeholder": "Ingrese la cantidad a añadir",
+        "id": "id_quantity",
         "min": "1",
         "max": "99999"
     }))
 
     creationDate = forms.DateField(widget=forms.DateInput(attrs={
         "class": "input",
-        "type": "date"
+        "type": "date",
+        "id": "id_creationDate"
     }))
     class Meta:
         model = Ppe
@@ -228,12 +221,44 @@ class EquipmentForm(forms.ModelForm):
         super(EquipmentForm, self).__init__(*args, **kwargs)
         self.fields['image'].required = False
 
-class MaterialForm(forms.ModelForm):
-    unit = forms.ChoiceField(choices=[('kg', 'Kilogramo'), ('m', 'Metro'), ('ltr', 'Litro')], widget=forms.Select(attrs={
+class CreateMaterialForm(forms.ModelForm):
+    name = forms.CharField(widget=forms.TextInput(attrs={
         "class": "input",
-        "placeholder": "Seleccione la unidad"
+        "type": "text",
+        "placeholder": "Ingrese el nombre del material"
     }))
 
+    new_unit = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Nueva unidad'}))
+
+    class Meta:
+        model = Material
+        fields = ['name', 'unit', 'image']
+        widgets = {
+            'image': forms.FileInput(attrs={
+                "class": "input",
+                "type": "file",
+            }),
+            'unit': forms.Select(attrs={'class': 'select-unit'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(CreateMaterialForm, self).__init__(*args, **kwargs)
+        self.fields['image'].required = False
+        self.fields['unit'].queryset = Unit.get_default_units()
+        self.fields['unit'].empty_label = "Seleccione la unidad"
+        
+    def clean(self):
+        cleaned_data = super().clean()
+        new_unit = cleaned_data.get('new_unit')
+
+        if new_unit:
+            unit, created = Unit.objects.get_or_create(name=new_unit)
+            cleaned_data['unit'] = unit
+
+        print(f"Cleaned data: {cleaned_data}")  # Añade este print para depuración
+        return cleaned_data
+
+class MaterialForm(forms.ModelForm):
     class Meta:
         model = Material
         fields = ['name', 'stock', 'unit', 'guideNumber', 'image']

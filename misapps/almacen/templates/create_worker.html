@@ -3,58 +3,6 @@
 {% block title %}Agregar Trabajador{% endblock %}
 
 {% block content %}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-    $(document).ready(function() {
-        // Función para cargar la tabla de EPPs añadidos
-        function loadCreatedWorkers() {
-            $.ajax({
-                url: "{% url 'worker_list' %}",
-                success: function(data) {
-                    $('#worker-table-container').html(data);
-                }
-            });
-        }
-
-        // Cargar las tablas al cargar la página
-        loadCreatedWorkers();
-
-        // Manejar el formulario de búsqueda para la tabla de EPPs creados
-        $('#search-form').submit(function(event) {
-            event.preventDefault();
-            var query = $('input[name="q"]').val();
-            $.ajax({
-                url: "{% url 'table_created_ppe' %}",
-                data: { q: query },
-                success: function(data) {
-                    $('#created-ppe-table-container').html(data);
-                }
-            });
-        });
-
-        $('form').on('submit', function(e) {
-        e.preventDefault();
-        $.ajax({
-            url: $(this).attr('action'),
-            type: 'POST',
-            data: $(this).serialize(),
-            success: function(response) {
-                if (response.success) {
-                    alert(response.message);
-                    loadAddedPpeTable();  // Actualiza la tabla
-                    $('form')[0].reset();  // Limpia el formulario
-                } else {
-                    // Muestra los errores
-                    alert('Error: ' + JSON.stringify(response.errors));
-                }
-            },
-            error: function() {
-                alert('Error al procesar la solicitud');
-            }
-        });
-    });
-    });
-</script>
 <section class="principal-general">
     <aside class="menu-lateral">
         <div class="tarjeta-presentacion">
@@ -67,10 +15,10 @@
                     <a class="navbar-brand" href="{% url 'home' %}">Inicio</a>
                 </div>
                 <div class="item-lateral">
-                    <a class="navbar-brand" href="{% url 'home' %}">Personal Almacenero</a>
+                    <a class="navbar-brand" href="{% url 'table_user' %}">Personal Almacenero</a>
                 </div>
                 <div class="item-lateral">
-                    <a class="navbar-brand" href="{% url 'worker_list' %}">Trabajadores</a>
+                    <a class="navbar-brand" href="{% url 'create_worker' %}">Trabajadores</a>
                 </div>
                 <div class="item-lateral">
                     <a class="navbar-brand" href="{% url 'show_duration_table' %}">Duración de EPPs</a>
@@ -80,16 +28,9 @@
     </aside>
     <section class="contendor-lateral-derecho">
         <div class="contenedor-principal">
-            {% if messages %}
-            {{ form.non_field_errors }}
-            <ul class="messages">
-                {% for message in messages %}
-                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-                {% endfor %}
-            </ul>
-            {% endif %}
             <div class="top-form">
                 <h2 class="titulo-primario">Agregar Trabajador a la Base de Datos</h2>
+                <a class="ver-tabla-btn" href="{% url 'worker_list' %}">Tabla de Trabajadores</a>
             </div>
             <div class="centrado">
                 <form method="post" action="{% url 'create_worker' %}" enctype="multipart/form-data" class="box">
@@ -135,9 +76,6 @@
                     </div>
                 </form>
             </div>
-        </div>
-        <div class="tabla-creacion" id="worker-table-container">
-                    
         </div>
     </section>
 </section>

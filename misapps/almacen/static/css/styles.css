@@ -179,7 +179,7 @@ header {
     display: flex;
     justify-content: space-around;
     background-color: #494949;
-    padding: 15px;
+    padding: 5px;
     border-radius: 10px;
 }
 
@@ -188,7 +188,6 @@ header {
     text-decoration: none;
     font-size: 1.1em;
     transition: background-color 0.3s, transform 0.3s;
-    padding: 10px 20px;
     border-radius: 5px;
 }
 
@@ -200,7 +199,7 @@ header {
 /* Contenedor principal */
 .contenedor-principal {
     width: 100%;
-    max-width: 800px;
+    
     margin: 0 auto;
     background-color: #ffffff;
     border-radius: 10px;
@@ -373,7 +372,6 @@ button[type="button"]:hover {
 .buscar {
     margin-bottom: 20px;
     display: flex;
-    justify-content: center;
 }
 
 .formulario-buscar {
@@ -432,31 +430,39 @@ button[type="button"]:hover {
     background-color: #f1f1f1;
 }
 
-.icon-btn {
-    background-color: transparent;
+/* Estilos generales para el contenedor de botones */
+.botones-acciones {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Estilos para el botón de guardar */
+.tbl-btn {
+    background-color: #e9e9e9; /* Color de fondo gris oscuro */
     border: none;
-    cursor: pointer;
-    padding: 5px;
+    color: white;
+    padding: 10px;
     border-radius: 5px;
+    cursor: pointer;
     transition: background-color 0.3s, transform 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.icon-btn:hover {
-    background-color: #f0f0f0; /* Color de fondo al pasar el ratón */
-    transform: scale(1.1); /* Escalar ligeramente el botón */
+/* Estilo para el botón al pasar el ratón */
+.tbl-btn:hover {
+    background-color: #797979; /* Color de fondo gris más claro */
+    transform: scale(1.05);
 }
 
+/* Estilo para la imagen dentro del botón */
 .icono-btn {
-    width: 24px; /* Tamaño del ícono */
-    height: 24px; /* Tamaño del ícono */
-    display: block;
-    margin: 0 auto; /* Centrar el ícono en el botón */
-    transition: filter 0.3s;
+    width: 24px; /* Ajusta el tamaño según sea necesario */
+    height: 24px; /* Ajusta el tamaño según sea necesario */
 }
 
-.icono-btn:hover {
-    filter: brightness(0.8); /* Efecto de brillo al pasar el ratón */
-}
 
 /* Estilos responsivos */
 @media (max-width: 768px) {
@@ -471,4 +477,36 @@ button[type="button"]:hover {
     .cuadro-busqueda input[type="text"], .btn-busqueda-elemento .btn {
         width: 100%;
     }
+}
+
+a {
+    text-decoration: none;
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s, color 0.3s, transform 0.3s;
+}
+
+/* Estilo para el botón "Agregar Trabajador" */
+.volver-btn {
+    background-color: #4CAF50; /* Verde */
+    color: white;
+}
+
+.volver-btn:hover {
+    background-color: #45a049;
+    color: white;
+    transform: scale(1.05);
+}
+
+/* Estilo para el botón "Tabla de Trabajadores" */
+.ver-tabla-btn {
+    background-color: #008CBA; /* Azul */
+    color: white;
+}
+
+.ver-tabla-btn:hover {
+    background-color: #007bb5;
+    color: white;
+    transform: scale(1.05);
 }

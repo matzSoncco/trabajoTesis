@@ -34,9 +34,9 @@
             <a class="link-form" href="{% url 'create_material' %}">Materiales</a>
         </nav>
         <div class="contenedor-formulario">
-            <h2>Creación de Material</h2>
+            <h2>Creación de Material</h2>   
             <div class="centrado">
-                <form method="post" action="{% url 'create_tool' %}" enctype="multipart/form-data" class="box">
+                <form method="post" action="{% url 'create_material' %}" enctype="multipart/form-data" class="box">
                     {% csrf_token %}
                     <div class="fila-form">
                         <div class="campo">
@@ -44,15 +44,22 @@
                             {{ form.name }}
                         </div>
                     </div>
+
                     <div class="fila-form">
                         <div class="campo">
                             <label for="" class="label">Unidad</label>
                             {{ form.unit }}
                         </div>
                         <div class="campo">
-                            <button type="button"><img class="icono-btn" src="../static/img/anadir.png" alt=""></button>
+                            <label for="" class="label">Agregar nueva unidad</label>
+                            {{ form.new_unit }}
+                        </div>
+                        <div class="campo">
+                            <label for="" class="label">Agregar nueva unidad</label>
+                            <button type="button" onclick="addNewUnit()">Agregar</button>
                         </div>
                     </div>
+
                     <div class="campo">
                         <label for="" class="label">Imágen</label>
                         {{ form.image }}
@@ -67,4 +74,20 @@
         </div>
     </section>
 </section>
+<script>
+    function addNewUnit() {
+        const newUnitField = document.getElementById('id_new_unit');
+        const unitSelect = document.querySelector('.select-unit');
+        const newUnit = newUnitField.value.trim();
+    
+        if (newUnit) {
+            const newOption = new Option(newUnit, newUnit, true, true);
+            unitSelect.add(newOption);
+            unitSelect.value = newUnit;
+            newUnitField.value = '';
+            
+            // Opcional: Puedes hacer una llamada AJAX aquí para crear la nueva unidad en el backend inmediatamente
+        }
+    }
+</script>
 {% endblock %}

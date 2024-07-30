@@ -12,12 +12,3 @@ class Worker(models.Model):
 
     def __str__(self):
         return "%s %s %s" %(self.dni, self.name, self.surname)
-    
-    @property
-    def status(self):
-        return "Activo" if self.workerStatus else "Inactivo"
-    
-    @status.setter
-    def status(self, value):
-        self.workerStatus = (value == "Inactivo")
-        self.save() 

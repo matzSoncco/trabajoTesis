@@ -6,39 +6,107 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
+        var addedPpe = [];
+
         // Función para cargar la tabla de EPPs añadidos
         function loadAddedPpeTable() {
-            $.ajax({
-                url: "{% url 'table_added_ppe' %}",
-                success: function(data) {
-                    $('#added-ppe-table-container').html(data);
-                }
+            // Aquí puedes reemplazar con un renderizado dinámico de la tabla en base a `addedPpe`
+            let html = '<table><thead><tr><th>N° de Guía</th><th>Fecha</th><th>Nombre</th><th>Costo Unitario</th><th>Cantidad</th><th>Stock ideal</th></tr></thead><tbody>';
+            addedPpe.forEach(function(ppe) {
+                html += `<tr>
+                            <td>${ppe.guideNumber}</td>
+                            <td>${ppe.creationDate}</td>
+                            <td>${ppe.name}</td>
+                            <td>${ppe.unitCost}</td>
+                            <td>${ppe.quantity}</td>
+                            <td>${ppe.stock}</td>
+                         </tr>`;
             });
+            html += '</tbody></table>';
+            $('#added-ppe-table-container').html(html);
         }
 
-        // Función para cargar la tabla de EPPs creados
-        function loadCreatedPpeTable() {
-            $.ajax({
-                url: "{% url 'table_created_ppe' %}",
-                success: function(data) {
-                    $('#created-ppe-table-container').html(data);
-                }
-            });
-        }
 
         // Cargar las tablas al cargar la página
         loadAddedPpeTable();
-        loadCreatedPpeTable();
-
-        // Manejar el formulario de búsqueda para la tabla de EPPs creados
-        $('#search-form').submit(function(event) {
-            event.preventDefault();
-            var query = $('input[name="q"]').val();
+        
+        function loadCreatedPpeTable(query = '') {
             $.ajax({
                 url: "{% url 'table_created_ppe' %}",
                 data: { q: query },
                 success: function(data) {
                     $('#created-ppe-table-container').html(data);
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            loadCreatedPpeTable();
+
+            $(document).on('submit', '#formulario-buscar', function(event) {
+                event.preventDefault();
+                var query = $(this).find('input[name="q"]').val();
+                loadCreatedPpeTable(query);
+            });
+        });
+
+        // Manejar la carga de datos en el formulario para su edición
+        $(document).on('click', '#agregar-formulario', function() {
+            var row = $(this).closest('tr');
+            var ppeId = row.find('td:first').text();
+            
+            $.ajax({
+                url: "{% url 'get_ppe_data' %}",  // Crea una vista en Django para devolver datos del EPP por ID
+                data: { id: ppeId },
+                success: function(data) {
+                    $('#id_guideNumber').val(data.guideNumber);
+                    $('#id_creationDate').val(data.creationDate);
+                    $('#id_name').val(data.name);
+                    $('#id_unitCost').val(data.unitCost);
+                    $('#id_quantity').val(data.quantity);
+                    $('#id_stock').val(data.stock);
+                }
+            });
+        });
+
+        // Manejar el botón de añadir EPP sin actualizar la base de datos
+        $('form').submit(function(event) {
+            event.preventDefault();
+            var formData = {
+                guideNumber: $('#id_guideNumber').val(),
+                creationDate: $('#id_creationDate').val(),
+                name: $('#id_name').val(),
+                unitCost: $('#id_unitCost').val(),
+                quantity: $('#id_quantity').val(),
+                stock: $('#id_stock').val()
+            };
+            addedPpe.push(formData);
+            loadAddedPpeTable();
+        });
+
+        // Manejar el botón de guardar todo y actualizar la base de datos
+        $('#save-all-btn').click(function() {
+            if (addedPpe.length === 0) {
+                alert('No hay EPPs para guardar.');
+                return;
+            }
+            $.ajax({
+                url: "{% url 'save_all_ppe' %}",
+                method: 'POST',
+                data: JSON.stringify(addedPpe),
+                contentType: 'application/json',
+                success: function(response) {
+                    if (response.status === 'success') {
+                        alert('EPPs guardados exitosamente.');
+                        addedPpe = [];  // Limpiar la lista de previsualización
+                        loadAddedPpeTable();  // Recargar la tabla de previsualización
+                    } else {
+                        alert('Hubo un error al guardar los EPPs: ' + response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error al guardar EPPs:", xhr.responseText);
+                    alert('Hubo un error al guardar los EPPs: ' + xhr.responseText);
                 }
             });
         });
@@ -85,31 +153,36 @@
                         {% csrf_token %}
                         <div class="fila-form">
                             <div class="campo">
-                                <label for="" class="label">N° de Guía</label>
+                                <label for="id_guideNumber" class="label">N° de Guía</label>
                                 {{ form.guideNumber }}
                             </div>
                             <div class="campo">
-                                <label for="" class="label">Fecha</label>
+                                <label for="id_creationDate" class="label">Fecha</label>
                                 {{ form.creationDate }}
                             </div>
                         </div>
         
                         <div class="fila-form">
                             <div class="campo">
-                                <label for="" class="label">Nombre</label>
+                                <label for="id_name" class="label">Nombre</label>
                                 {{ form.name }}
                             </div>
                         </div>
         
                         <div class="fila-form">
                             <div class="campo">
-                                <label for="" class="label">Costo Uitario</label>
+                                <label for="id_unitCost" class="label">Costo Unitario</label>
                                 {{ form.unitCost }}
                             </div>
                             <div class="campo">
-                                <label for="" class="label">Cantidad</label>
+                                <label for="id_quantity" class="label">Cantidad</label>
                                 {{ form.quantity }}
                             </div>
+                        </div>
+
+                        <div class="campo">
+                            <label for="id_stock" class="label">Stock ideal</label>
+                            {{ form.stock }}
                         </div>
         
                         <div class="campo-botones">
@@ -122,9 +195,10 @@
                     <h2 class="titulo-primario">Añadidos</h2>
 
                 </div>
+                <button id="save-all-btn">Guardar Todos</button>
             </div>
             <div class="tabla-creacion" id="created-ppe-table-container">
-                    
+                
             </div>
         </div>
     </section>

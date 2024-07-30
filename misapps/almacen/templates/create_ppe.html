@@ -34,14 +34,6 @@
             <a class="link-form" href="{% url 'create_material' %}">Materiales</a>
         </nav>
         <div class="contenedor-principal">
-            {% if messages %}
-            {{ form.non_field_errors }}
-            <ul class="messages">
-                {% for message in messages %}
-                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-                {% endfor %}
-            </ul>
-            {% endif %}
             <div class="top-form">
                 <h2 class="titulo-primario">Creación de Equipos de Protección Personal</h2>
             </div>
@@ -61,8 +53,12 @@
                             {{ form.unit }}
                         </div>
                         <div class="campo">
+                            <label for="" class="label">Agregar nueva unidad</label>
                             {{ form.new_unit }}
-                            <button type="button" onclick="addNewUnit()">Agregar nueva unidad</button>
+                        </div>
+                        <div class="campo">
+                            <label for="" class="label">Agregar nueva unidad</label>
+                            <button type="button" onclick="addNewUnit()">Agregar</button>
                         </div>
                     </div>
     

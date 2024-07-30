@@ -1,3 +1,4 @@
+<h2 class="titulo-primario">Creados</h2>
 <div class="buscar">
     <form class="formulario-buscar" method="get" action=".">
         <div class="cuadro-busqueda">
@@ -31,7 +32,7 @@
                         No image
                     {% endif %}
                 </td>
-                <td><button><img class="icono-btn" src="../../static/img/anadir.png" alt=""></button></td>
+                <td><button id="agregar-formulario" data-ppe-id="{{ ppe.idPpe }}"><img class="icono-btn" src="../../static/img/anadir.png" alt=""></button></td>
             </tr>
         {% empty %}
             <tr>

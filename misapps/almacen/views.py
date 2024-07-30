@@ -6,11 +6,13 @@ from django.contrib.auth.decorators import login_required
 from django.forms import inlineformset_factory
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
+import json
 import logging
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Sum
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.models import User
 from .models.Ppe import Ppe
 from .models.PpeLoan import PpeLoan, PpeLoanDetail
 from .models.Equipment import Equipment
@@ -18,8 +20,7 @@ from .models.Worker import Worker
 from .models.Material import Material
 from .models.Loan import Loan
 from .models.Tool import Tool
-from .forms import AdminSignUpForm, PpeForm, MaterialForm, WorkerForm, EquipmentForm, ToolForm, LoanForm, PpeLoanForm, Ppe, ExceptionPpeLoanForm, PpeLoanDetailForm, PpeLoanDetailForm, CreatePpeForm
-
+from .forms import AdminSignUpForm, PpeForm, MaterialForm, WorkerForm, EquipmentForm, ToolForm, LoanForm, PpeLoanForm, Ppe, ExceptionPpeLoanForm, PpeLoanDetailForm, PpeLoanDetailForm, CreatePpeForm, CreateMaterialForm
 
 logger = logging.getLogger(__name__)
 
@@ -33,29 +34,44 @@ def set_duration(request):
     form = PpeForm()
     return render(request, 'show_duration_table.html', {'form': form})
 
+def cost_summary_view(request):
+    epp_items = Ppe.objects.all()
+    tool_items = Tool.objects.all()
+    equip_items = Equipment.objects.all()
+    mat_items = Material.objects.all()
+
+    all_items = list(epp_items) + list(tool_items) + list(equip_items) + list(mat_items)
+    
+    final_total_cost = sum(item.totalCost for item in all_items)
+    total_ppe_cost = sum(item.totalCost for item in epp_items)
+    total_tool_cost = sum(item.totalCost for item in tool_items)
+    total_equip_cost = sum(item.totalCost for item in equip_items)
+    total_mat_cost = sum(item.totalCost for item in mat_items)
+
+    context = {
+        'all_items': all_items,
+        'finalTotalCost': final_total_cost,
+        'totalPpeCost': total_ppe_cost,
+        'totalToolCost': total_tool_cost,
+        'totalEquipCost': total_equip_cost,
+        'totalMatCost': total_mat_cost
+    }
+
+    return render(request, 'total_cost_table.html', context)
+
 @require_POST
-@csrf_exempt  # Solo para pruebas, eliminar en producción
 def update_ppe_duration(request):
     ppe_id = request.POST.get('ppe_id')
     new_duration = request.POST.get('duration')
     
-    logger.info(f"Recibida solicitud de actualización: PPE ID {ppe_id}, Nueva duración {new_duration}")
+    ppe = Ppe.objects.get(idPpe=ppe_id)
+    logger.info(f"PPE encontrado: {ppe}")
     
-    try:
-        ppe = Ppe.objects.get(idPpe=ppe_id)
-        logger.info(f"PPE encontrado: {ppe}")
-        
-        ppe.duration = new_duration
-        ppe.save()
-        
-        logger.info(f"PPE actualizado: {ppe}")
-        return JsonResponse({'success': True})
-    except Ppe.DoesNotExist:
-        logger.error(f"PPE no encontrado: ID {ppe_id}")
-        return JsonResponse({'success': False, 'error': 'PPE not found'})
-    except Exception as e:
-        logger.error(f"Error al actualizar PPE: {str(e)}")
-        return JsonResponse({'success': False, 'error': str(e)})
+    ppe.duration = new_duration
+    ppe.save()
+    
+    logger.info(f"PPE actualizado: {ppe}")
+    return JsonResponse({'success': True})
     
 @login_required
 def show_duration(request):
@@ -74,9 +90,59 @@ def PersonalProtectionEquipment(request):
         epp = Ppe.objects.filter(name__icontains=query)
     else:
         epp = Ppe.objects.all()
-    print(f"Número de PPEs encontrados: {epp.count()}")  # Añade este print
-    return render(request, 'table_created_ppe.html', {'epp': epp, 'query': query})
+    
+    context = {'epp': epp, 'query': query}
+    return render(request, 'table_created_ppe.html', context)
 
+def get_ppe_data(request):
+    ppe_id = request.GET.get('id')
+    ppe = get_object_or_404(Ppe, idPpe=ppe_id)
+    data = {
+        'guideNumber': ppe.guideNumber,
+        'creationDate': ppe.creationDate,
+        'name': ppe.name,
+        'unitCost': ppe.unitCost,
+        'quantity': ppe.quantity,
+        'stock': ppe.stock
+    }
+    return JsonResponse(data)
+
+from django.db import IntegrityError
+from datetime import datetime
+@csrf_exempt
+def save_all_ppe(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            for ppe_data in data:
+                ppe, created = Ppe.objects.update_or_create(
+                    name=ppe_data['name'],
+                    defaults={
+                        'guideNumber': ppe_data['guideNumber'],
+                        'creationDate': datetime.strptime(ppe_data['creationDate'], '%Y-%m-%d').date(),
+                        'unitCost': float(ppe_data['unitCost']),
+                        'quantity': int(ppe_data['quantity']),
+                        'stock': int(ppe_data['stock'])
+                    }
+                )
+            return JsonResponse({'status': 'success'})
+        except IntegrityError as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    return JsonResponse({'status': 'fail', 'message': 'Invalid request method'}, status=400)
+
+@login_required
+def total_cost_ppe(request):
+    query = request.GET.get('q', '')
+    if query:
+        epp = Ppe.objects.filter(name__icontains=query)
+    else:
+        epp = Ppe.objects.all()
+    print(f"Número de PPEs encontrados: {epp.count()}")  # Añade este print
+    return render(request, 'total_ppe_cost_table.html', {'epp': epp, 'query': query})
+
+login_required
 def show_added_ppe(request):
     query = request.GET.get('q', '')
     if query:
@@ -120,22 +186,6 @@ def add_ppe(request):
         form = PpeForm()
     return render(request, 'add_ppe.html', {'form': form})
 
-@login_required
-def add_quantity(request, id):
-    try:
-        epp = get_object_or_404(Ppe, idPpe=id)
-        form = AddQPpeForm(request.POST)
-        if form.is_valid():
-            quantity_to_add = form.cleaned_data['quantity']
-            epp.quantity += quantity_to_add
-            epp.save()
-            return JsonResponse({'success': True, 'new_quantity': epp.quantity})
-        else:
-            return JsonResponse({'success': False, 'error': 'Invalid form data'}, status=400)
-    except Exception as e:
-        import traceback
-        print(traceback.format_exc())  # Esto imprimirá el traceback completo en la consola del servidor
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @login_required
 def delete_ppe(request, id):
@@ -175,6 +225,15 @@ def equipment_list(request):
     else:
         equipment = Equipment.objects.all()
     return render(request, 'equipment_list.html', {'equipment': equipment, 'query': query})
+
+@login_required
+def total_cost_equip(request):
+    query = request.GET.get('q')
+    if query:
+        equipment = Equipment.objects.filter(name__icontains=query)
+    else:
+        equipment = Equipment.objects.all()
+    return render(request, 'total_equip_cost_table.html', {'equipment': equipment, 'query': query})
 
 @login_required
 def create_equipment(request):
@@ -225,6 +284,25 @@ def material_list(request):
     else:
         materials = Material.objects.all()
     return render(request, 'material_list.html', {'materials': materials, 'query': query})
+
+def create_material(request):
+    if request.method == 'POST':
+        form = CreateMaterialForm(request.POST, request.FILES)
+        if form.is_valid():
+            ppe = form.save()
+            return redirect('create_ppe')
+    else:
+        form = CreateMaterialForm()
+    return render(request, 'create_material.html', {'form': form})
+
+@login_required
+def total_cost_material(request):
+    query = request.GET.get('q')
+    if query:
+        materials = Material.objects.filter(name__icontains=query)
+    else:
+        materials = Material.objects.all()
+    return render(request, 'total_mat_cost_table.html', {'materials': materials, 'query': query})
 
 @login_required
 def create_material(request):
@@ -277,6 +355,15 @@ def tool_list(request):
     return render(request, 'tool_list.html', {'tools': tools, 'query': query})
 
 @login_required
+def total_cost_tool(request):
+    query = request.GET.get('q', '')
+    if query:
+        tools = Tool.objects.filter(name__icontains=query)
+    else:
+        tools = Tool.objects.all()
+    return render(request, 'total_tool_cost_table.html', {'tools': tools, 'query': query})
+
+@login_required
 def create_tool(request):
     if request.method == 'POST':
         form = ToolForm(request.POST)
@@ -319,11 +406,14 @@ def total_tool_stock(request):
 #WORKER
 @login_required
 def worker_list(request):
-    query = request.GET.get('q')
+    query = request.GET.get('q', '')
     if query:
-        workers = Worker.objects.filter(name__icontains=query)
+        workers = Worker.objects.filter(name__icontains=query) | \
+                  Worker.objects.filter(surname__icontains=query) | \
+                  Worker.objects.filter(dni__icontains=query) | \
+                  Worker.objects.filter(position__icontains=query)
     else:
-        workers = Worker.objects.all()
+        workers = Worker.objects.all().order_by('-contractDate')
     return render(request, 'worker_list.html', {'workers': workers, 'query': query})
 
 @login_required
@@ -487,7 +577,9 @@ def register_admin(request):
         if form.is_valid():
             user = form.save()
             auth_login(request, user)
-            return redirect('home')
+            return redirect('login')
+        else:
+            print(form.errors)
     else:
         form = AdminSignUpForm()
     return render(request, 'register_admin.html', {'form': form})
@@ -502,6 +594,16 @@ def login(request):
     else:
         form = AuthenticationForm()
     return render(request, 'login.html', {'form': form})
+
+@login_required
+def user_list(request):
+    query = request.GET.get('q', '')
+    if query:
+        admin = User.objects.filter(admin__name_icontains=query)
+    else:
+        admin = User.objects.all()
+    print(f"Número de usuarios: {admin.count()}")
+    return render(request, 'table_user.html', {'admin': admin, 'query': query})
 
 def exit(request):
     logout(request)

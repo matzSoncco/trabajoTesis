@@ -1,5 +1,5 @@
 <script>
-    $('.save-duration-btn').on('click', function(e) {
+    $('#save-duration-btn').on('click', function(e) {
             e.preventDefault(); // Prevenir cualquier acción por defecto del botón
             
             console.log('Botón clickeado'); // Para verificar si el evento se está capturando
@@ -56,7 +56,11 @@
                 <td>{{ ppe.idPpe }}</td>
                 <td>{{ ppe.name }}</td>
                 <td class="editable-duration" contenteditable="true">{{ ppe.duration }}</td>
-                <td><button class="save-duration-btn"><img class="icono-btn" src="../../../static/img/anadir.png" alt=""></button></td>
+                <td>
+                    <div class="botones-acciones">
+                        <button class="tbl-btn" id="save-duration-btn"><img class="icono-btn" src="../../../static/img/disquete.png" alt=""></button>
+                    </div>
+                </td>
             </tr>
         {% empty %}
             <tr>

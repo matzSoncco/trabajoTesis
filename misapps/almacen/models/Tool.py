@@ -18,6 +18,8 @@ class Tool(models.Model):
     guideNumber = models.IntegerField(verbose_name=_('Número de Guía'), null=False, default=0)
     image = models.ImageField(upload_to='uploads/', blank=True, null=True)
     creationDate = models.DateField(auto_now_add=False, blank=False, null=False)
+    unitCost = models.DecimalField(default=0.0, null=False, max_digits=8, decimal_places=2)
+    totalCost = models.DecimalField(default=0.0, null=False, max_digits=10, decimal_places=2, editable=False)
 
     def get_level_display(self):
         return dict(self.LEVELS).get(self.level, 'Desconocido')
