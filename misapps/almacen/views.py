@@ -4,9 +4,13 @@ from django.contrib.auth import logout
 from django.contrib import messages
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.decorators import login_required
+from django.contrib.contenttypes.models import ContentType
 from django.forms import inlineformset_factory
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+from django.db import IntegrityError, models
+from datetime import datetime
 import json
 import logging
 from django.contrib import messages
@@ -21,6 +25,7 @@ from .models.Worker import Worker
 from .models.Material import Material
 from .models.Loan import Loan
 from .models.Tool import Tool
+from .models.History import History
 from .forms import AdminSignUpForm, PpeForm, MaterialForm, WorkerForm, EquipmentForm, ToolForm, LoanForm, PpeLoanForm, Ppe, CreatePpeForm, CreateMaterialForm, CreateEquipentForm, CreateToolForm
 
 logger = logging.getLogger(__name__)
@@ -113,9 +118,6 @@ def get_ppe_data(request):
         'stock': ppe.stock
     }
     return JsonResponse(data)
-
-from django.db import IntegrityError
-from datetime import datetime
 @csrf_exempt
 def save_all_ppe(request):
     if request.method == "POST":
@@ -247,8 +249,14 @@ def create_equipment(request):
     if request.method == 'POST':
         form = CreateEquipentForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect('create_equipment')
+            equipment=form.save()
+            History.objects.create(
+                user=request.user,
+                action='create',
+                content_type=ContentType.objects.get_for_model(equipment),
+                object_id=equipment.idEquipment
+            )
+            return redirect('equipment_list')
     else:
         form = CreateEquipentForm()
     return render(request, 'create_equipment.html', {'form': form})
@@ -259,6 +267,12 @@ def delete_equipment(request, id):
     
     if request.method == 'POST':
         equipment.delete()
+        History.objects.create(
+            user=request.user,
+            action='delete',
+            content_type=ContentType.objects.get_for_model(equipment),
+            object_id=equipment.pk
+        )
         return redirect('equipment_list')
     else:
         return render(request, 'delete_ppe.html', {'equipment': equipment})
@@ -272,7 +286,13 @@ def modify_equipment(request, id):
         form = EquipmentForm(request.POST, instance=equipment)
         if form.is_valid():
             form.instance.status = True
-            form.save()
+            equipment = form.save()
+            History.objects.create(
+                user=request.user,
+                action='update',
+                content_type=ContentType.objects.get_for_model(equipment),
+                object_id=equipment.pk
+            )
             return redirect('equipment_list')
     else:
         return render(request, 'modify_equipment.html', {'form': form})
@@ -650,6 +670,12 @@ def modify_ppe_loan(request, id):
             return redirect('ppe_loan_list')
     else:
         return render(request, 'modify_ppe_loan.html', {'form': form})
+    
+#historial
+
+def history(request):
+    history_records = History.objects.all().order_by('-timestamp')
+    return render(request, 'history.html', {'history_records': history_records})
     
 #REGISTER
 def register_admin(request):
