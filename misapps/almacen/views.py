@@ -139,6 +139,8 @@ def total_cost_ppe(request):
         epp = Ppe.objects.filter(name__icontains=query)
     else:
         epp = Ppe.objects.all()
+    for item in epp:
+        item.save()
     print(f"Número de PPEs encontrados: {epp.count()}")  # Añade este print
     return render(request, 'total_ppe_cost_table.html', {'epp': epp, 'query': query})
 
@@ -233,6 +235,8 @@ def total_cost_equip(request):
         equipment = Equipment.objects.filter(name__icontains=query)
     else:
         equipment = Equipment.objects.all()
+    for item in equipment:
+        item.save()
     return render(request, 'total_equip_cost_table.html', {'equipment': equipment, 'query': query})
 
 @login_required
@@ -302,6 +306,8 @@ def total_cost_material(request):
         materials = Material.objects.filter(name__icontains=query)
     else:
         materials = Material.objects.all()
+    for item in materials:
+        item.save()
     return render(request, 'total_mat_cost_table.html', {'materials': materials, 'query': query})
 
 @login_required
@@ -361,6 +367,8 @@ def total_cost_tool(request):
         tools = Tool.objects.filter(name__icontains=query)
     else:
         tools = Tool.objects.all()
+    for item in tools:
+        item.save()
     return render(request, 'total_tool_cost_table.html', {'tools': tools, 'query': query})
 
 @login_required

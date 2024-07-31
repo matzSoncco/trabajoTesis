@@ -28,6 +28,7 @@ class Equipment(models.Model):
             raise ValidationError(_('Debe seleccionar un nivel válido.'))
 
     def save(self, *args, **kwargs):
+        self.totalCost = self.unitCost * self.quantity
         if not self.idEquipment or not self.idEquipment.startswith('E-'):
             # Obtiene el número autoincrementable
             last_id = Equipment.objects.all().order_by('-idEquipment').first()

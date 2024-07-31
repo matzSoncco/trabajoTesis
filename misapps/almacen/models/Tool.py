@@ -29,6 +29,7 @@ class Tool(models.Model):
             raise ValidationError(_('Debe seleccionar un nivel válido.'))
     
     def save(self, *args, **kwargs):
+        self.totalCost = self.unitCost * self.quantity
         if not self.idTool or not self.idTool.startswith('H-'):
             # Obtiene el número autoincrementable
             last_id = Tool.objects.all().order_by('-idTool').first()

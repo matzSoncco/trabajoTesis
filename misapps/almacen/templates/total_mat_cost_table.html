@@ -44,7 +44,9 @@
                     <tr>
                         <th>Codigo</th>
                         <th>Nombre</th>
+                        <th>Cantidad</th>
                         <th>Costo Unitario</th>
+                        <th>Costo sub Total</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -52,7 +54,9 @@
                         <tr>
                             <td>{{ item.idMaterial }}</td>
                             <td>{{ item.name }}</td>
+                            <td>{{ item.quantity}}</td>
                             <td>{{ item.unitCost }}</td>
+                            <td>{{ item.totalCost }}</td>
                         </tr>
                     {% empty %}
                         <tr>

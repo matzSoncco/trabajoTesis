@@ -16,6 +16,7 @@ class Material(models.Model):
     totalCost = models.DecimalField(default=0.0, null=False, max_digits=10, decimal_places=2, editable=False)
 
     def save(self, *args, **kwargs):
+        self.totalCost = self.unitCost * self.quantity
         if not self.idMaterial or not self.idMaterial.startswith('M-'):
             # Obtiene el número autoincrementable
             last_id = Material.objects.all().order_by('-idMaterial').first()
