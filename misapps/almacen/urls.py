@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
-from .views import home, register_admin, login, exit
+from .views import home, register_admin, login, exit, history
 from . import views
 
 urlpatterns = [
@@ -53,6 +53,7 @@ urlpatterns = [
     path('ppeloan/modify/<int:id>/', views.modify_ppe_loan, name='modify_ppe_loan'),
     path('register_admin/', register_admin, name='register_admin'),
     path('admin_list/', views.user_list, name='table_user'),
+    path('history/', history, name='history'),
     path('login/', login, name='login'),
     path('logout/', exit, name='exit'),
 ]
