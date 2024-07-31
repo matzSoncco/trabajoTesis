@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import logout
+from django.contrib import messages
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.decorators import login_required
 from django.forms import inlineformset_factory
@@ -170,20 +171,12 @@ def create_ppe(request):
     if request.method == 'POST':
         form = CreatePpeForm(request.POST, request.FILES)
         if form.is_valid():
-            try:
-                ppe = form.save()
-                print(f"PPE creado: {ppe.idPpe} - {ppe.name}")
-                messages.success(request, f'PPE "{ppe.name}" creado exitosamente.')
-                return redirect('create_ppe')
-            except Exception as e:
-                print(f"Error al guardar PPE: {str(e)}")
-                messages.error(request, f'Error al crear PPE: {str(e)}')
+            form.save()
+            messages.success(request, 'EPP guardado exitosamente.')
+            return redirect('create_ppe')
         else:
-            print("Errores del formulario:")
-            for field, errors in form.errors.items():
-                for error in errors:
-                    print(f"Campo {field}: {error}")
-            messages.error(request, 'Por favor, corrige los errores en el formulario.')
+            print("Form is not valid")
+            print(form.errors)
     else:
         form = CreatePpeForm()
     return render(request, 'create_ppe.html', {'form': form})
