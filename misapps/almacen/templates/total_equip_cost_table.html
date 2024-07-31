@@ -55,8 +55,8 @@
                             <td>{{ item.idEquipment }}</td>
                             <td>{{ item.name }}</td>
                             <td>{{ item.quantity}}</td>
-                            <td>{{ item.unitCost }}</td>
-                            <td>{{ item.totalCost }}</td>
+                            <td>s/.{{ item.unitCost }}</td>
+                            <td>s/.{{ item.totalCost }}</td>
                         </tr>
                     {% empty %}
                         <tr>
@@ -66,7 +66,8 @@
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td colspan="4"><strong>Costo Total Final</strong> {{ item.totalCost }}</td>
+                        <td colspan="4"><strong>Costo Total Final </strong>
+                        <td><strong>s/. {{ total_cost_final }}</strong></td>
                     </tr>
                 </tfoot>
             </table>            

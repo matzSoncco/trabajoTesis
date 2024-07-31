@@ -45,16 +45,28 @@
                         <th>Codigo</th>
                         <th>Nombre</th>
                         <th>Costo Unitario</th>
+                        <th>Cantidad</th>
                         <th>Costo Total</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in all_items %}
                         <tr>
-                            <td>{{ item.id }}</td>
+                            {% if item.idTool %}
+                                <td>{{ item.idTool }}</td>
+                            {% elif item.idPpe %}
+                                <td>{{ item.idPpe }}</td>
+                            {% elif item.idMaterial %}
+                                <td>{{ item.idMaterial }}</td>
+                            {% elif item.idEquipment %}
+                                <td>{{ item.idEquipment }}</td>
+                            {% else %}
+                                <td>N/A</td>
+                            {% endif %}
                             <td>{{ item.name }}</td>
-                            <td>{{ item.unitCost }}</td>
-                            <td>{{ item.totalCost }}</td>
+                            <td>s/.{{ item.unitCost }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>s/.{{ item.totalCost }}</td>
                         </tr>
                     {% empty %}
                         <tr>
@@ -64,8 +76,8 @@
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td colspan="4"><strong>Costo Total Final</strong></td>
-                        <td><strong>{{ finalTotalCost }}</strong></td>
+                        <td colspan="4"><strong>Costo Total Final</strong> </td>
+                        <td><strong>s/.{{ finalTotalCost }}</strong></td>
                     </tr>
                 </tfoot>
             </table>            

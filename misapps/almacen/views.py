@@ -40,6 +40,15 @@ def cost_summary_view(request):
     equip_items = Equipment.objects.all()
     mat_items = Material.objects.all()
 
+    for item in epp_items:
+        item.save()
+    for item in tool_items:
+        item.save()
+    for item in equip_items:
+        item.save()
+    for item in mat_items:
+        item.save()
+
     all_items = list(epp_items) + list(tool_items) + list(equip_items) + list(mat_items)
     
     final_total_cost = sum(item.totalCost for item in all_items)
@@ -139,10 +148,12 @@ def total_cost_ppe(request):
         epp = Ppe.objects.filter(name__icontains=query)
     else:
         epp = Ppe.objects.all()
+    total_cost_final = 0
     for item in epp:
         item.save()
+        total_cost_final += item.totalCost
     print(f"Número de PPEs encontrados: {epp.count()}")  # Añade este print
-    return render(request, 'total_ppe_cost_table.html', {'epp': epp, 'query': query})
+    return render(request, 'total_ppe_cost_table.html', {'epp': epp, 'query': query, 'total_cost_final': total_cost_final})
 
 login_required
 def show_added_ppe(request):
@@ -235,9 +246,11 @@ def total_cost_equip(request):
         equipment = Equipment.objects.filter(name__icontains=query)
     else:
         equipment = Equipment.objects.all()
+    total_cost_final = 0
     for item in equipment:
         item.save()
-    return render(request, 'total_equip_cost_table.html', {'equipment': equipment, 'query': query})
+        total_cost_final += item.totalCost
+    return render(request, 'total_equip_cost_table.html', {'equipment': equipment, 'query': query, 'total_cost_final': total_cost_final})
 
 @login_required
 def create_equipment(request):
@@ -306,9 +319,11 @@ def total_cost_material(request):
         materials = Material.objects.filter(name__icontains=query)
     else:
         materials = Material.objects.all()
+    total_cost_final = 0
     for item in materials:
         item.save()
-    return render(request, 'total_mat_cost_table.html', {'materials': materials, 'query': query})
+        total_cost_final += item.totalCost
+    return render(request, 'total_mat_cost_table.html', {'materials': materials, 'query': query, 'total_cost_final': total_cost_final})
 
 @login_required
 def create_material(request):
@@ -367,9 +382,11 @@ def total_cost_tool(request):
         tools = Tool.objects.filter(name__icontains=query)
     else:
         tools = Tool.objects.all()
+    total_cost_final = 0
     for item in tools:
         item.save()
-    return render(request, 'total_tool_cost_table.html', {'tools': tools, 'query': query})
+        total_cost_final += item.totalCost
+    return render(request, 'total_tool_cost_table.html', {'tools': tools, 'query': query, 'total_cost_final': total_cost_final})
 
 @login_required
 def create_tool(request):
