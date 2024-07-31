@@ -1,0 +1,334 @@
+{% extends 'base.html' %}
+
+{% block title %}Agregar Equipo{% endblock %}
+
+{% block content %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script>
+    $(document).ready(function() {
+        $("#id_worker").autocomplete({
+            source: "{% url 'worker_autocomplete' %}",
+            minLength: 2,
+            select: function(event, ui) {
+                $.ajax({
+                    url: "{% url 'worker_details' %}",
+                    data: {worker_name: ui.item.value},
+                    success: function(data) {
+                        $("#id_worker").val(data.name);
+                        $("#id_workerDni").val(data.dni);
+                        $("#id_workerPosition").val(data.position);
+                    }
+                });
+            }
+        });
+
+        $("#id_workerDni").autocomplete({
+            source: "{% url 'dni_autocomplete' %}",
+            minLength: 2,
+            select: function(event, ui) {
+                $("#id_workerDni").val(ui.item.value);
+                $.ajax({
+                    url: "{% url 'worker_autocomplete' %}",
+                    data: {term: ui.item.value},
+                    success: function(data) {
+                        $("#id_worker").val(data[0]);
+                    }
+                });
+            }
+        });
+        
+        $("form").on('submit', function(e) {
+            e.preventDefault();
+            let ppeData = {
+                name: $("#id_ppe").val(),
+                quantity: $("#id_loanAmount").val(),
+                worker: $("#id_worker").val(),
+                workerPosition: $("#id_workerPosition").val(),
+                workerDni: $("#id_workerDni").val(),
+                loanDate: $("#id_loanDate").val()
+            };
+            preDeliveryPpeList.push(ppeData);
+            updatePreDeliveryTable();
+            // Limpiar el formulario
+            $("#id_ppe, #id_loanAmount").val('');
+        });
+
+        let preDeliveryPpeList = [];
+
+        function updatePreDeliveryTable() {
+            let tableHtml = '<table><tr><th>Nombre del EPP</th><th>Cantidad</th><th>Trabajador</th><th>Acción</th></tr>';
+            preDeliveryPpeList.forEach((ppe, index) => {
+                tableHtml += '<tr>';
+                tableHtml += `<td>${ppe.name}</td>`;
+                tableHtml += `<td>${ppe.quantity}</td>`;
+                tableHtml += `<td>${ppe.worker}</td>`;
+                tableHtml += `<td><button class="remove-from-pre-delivery" data-index="${index}">Eliminar</button></td>`;
+                tableHtml += '</tr>';
+            });
+            tableHtml += '</table>';
+            $('#view-given-ppe-table-container').html(tableHtml);
+        }
+
+        $(document).on('click', '.add-to-pre-delivery', function() {
+            let ppeName = $(this).data('ppe-name');
+            $("#id_ppe").val(ppeName);
+        });
+
+        $('#id_ppe').change(function() {
+            var ppeName = $(this).val();
+            $.ajax({
+                url: '{% url "check_ppe_availability" %}',
+                data: {'ppe_name': ppeName},
+                success: function(response) {
+                    if(response.available > 0) {
+                        $('#id_loanAmount').attr('max', response.available);
+                        $('#id_loanAmount').prop('disabled', false);
+                    } else {
+                        alert('No hay unidades disponibles de este EPP');
+                        $('#id_loanAmount').prop('disabled', true);
+                    }
+                },
+                error: function() {
+                    alert('Error al verificar la disponibilidad del EPP');
+                }
+            });
+        });
+
+        $('#ppe-loan-form').submit(function(e) {
+            var loanAmount = $('#id_loanAmount').val();
+            var maxAmount = $('#id_loanAmount').attr('max');
+            if(parseInt(loanAmount) > parseInt(maxAmount)) {
+                e.preventDefault();
+                alert('La cantidad solicitada excede la disponible');
+            }
+        });
+
+        $(document).on('click', '.remove-from-pre-delivery', function() {
+            let index = $(this).data('index');
+            preDeliveryPpeList.splice(index, 1);
+            updatePreDeliveryTable();
+        });
+
+        $("#give-btn").click(function() {
+            if (preDeliveryPpeList.length === 0) {
+                alert("No hay EPPs seleccionados para entregar.");
+                return;
+            }
+
+            let popupTableBody = $('#popup-table tbody');
+            popupTableBody.empty();
+
+            preDeliveryPpeList.forEach(ppe => {
+                let row = `<tr data-ppe-id="${ppe.id}">
+                    <td>${ppe.name}</td>
+                    <td>${ppe.quantity}</td>
+                    <td><input type="checkbox" class="renewal-checkbox"></td>
+                    <td><input type="date" class="renewal-date" disabled></td>
+                </tr>`;
+                popupTableBody.append(row);
+            });
+
+            $('#popup').show();
+        });
+
+        $('#confirm-btn').click(function() {
+            $.ajax({
+                url: '{% url "confirm_ppe_loan" %}',
+                method: 'POST',
+                data: JSON.stringify({ppe_loans: preDeliveryPpeList}),
+                contentType: 'application/json',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        alert('Entrega confirmada');
+                        $('#popup').hide();
+                        preDeliveryPpeList = [];
+                        updatePreDeliveryTable();
+                        loadAddedPpeTable();
+                    } else {
+                        alert('Error al confirmar la entrega: ' + response.error);
+                    }
+                }
+            });
+        });
+
+        $('#cancel-btn').click(function() {
+            $('#popup').hide();
+        });
+
+        $(document).on('change', '.renewal-checkbox', function() {
+            let renewalDate = $(this).closest('tr').find('.renewal-date');
+            renewalDate.prop('disabled', !$(this).is(':checked'));
+        });
+    });
+</script>
+<style>
+    #popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 20px;
+        border: 1px solid #ccc;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        z-index: 1000;
+    }
+
+    #popup table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    #popup th, #popup td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+
+    #popup th {
+        background-color: #f2f2f2;
+    }
+</style>
+<section class="principal-general">
+    <aside class="menu-lateral">
+        <div class="tarjeta-presentacion">
+            <div class="foto-perfil"><img src="../../static/img/perfil.png" alt=""></div>
+            <div class="nombre-perfil"><span>Nombre del almacenero</span></div>
+        </div>
+        <div class="menu-items-lateral">
+            <nav class="navegacion-lateral">
+                <div class="item-lateral">
+                    <a class="navbar-brand" href="{% url 'home' %}">Inicio</a>
+                </div>
+                <div class="item-lateral">
+                    <a class="navbar-brand" href="{% url 'table_user' %}">Personal Almacenero</a>
+                </div>
+                <div class="item-lateral">
+                    <a class="navbar-brand" href="{% url 'create_worker' %}">Trabajadores</a>
+                </div>
+                <div class="item-lateral">
+                    <a class="navbar-brand" href="{% url 'show_duration_table' %}">Duración de EPPs</a>
+                </div>
+            </nav>
+        </div>
+    </aside>
+    <section class="contendor-lateral-derecho">
+        <nav class="navegacion-link-formularios-top">
+            <a class="link-form" href="{% url 'add_ppe_loan' %}">EPPs</a>
+            <a class="link-form" href="#">Herramientas</a>
+            <a class="link-form" href="#">Equipos</a>
+            <a class="link-form" href="#">Materiales</a>
+        </nav>
+        <div class="contenedor-formulario">
+            <div class="top-form">
+                <h2 class="titulo-primario">Asignar de Equipos de Protección Personal</h2>
+                {% if messages %}
+                <ul class="messages">
+                    {% for message in messages %}
+                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                <a class="link-top-form" href="{% url 'ppe_loan_list' %}">Ver tabla</a>
+            </div>
+            <div class="centrado">
+                <div class="formulario-contenedor-individual" >
+                    <form id="ppe-loan-form" method="post" action="{% url 'add_ppe_loan' %}" enctype="multipart/form-data" class="box">
+                        {% csrf_token %}
+                        <div class="fila-form">
+                            <div class="campo">
+                                <label for="id_ppe" class="label">EPP</label>
+                                {{ form.ppe }}
+                            </div>
+                            <div class="campo">
+                                <label for="" class="label">Fecha</label>
+                                {{ form.loanDate }}
+                            </div>
+                        </div>
+        
+                        <div class="fila-form">
+                            <div class="campo">
+                                <label for="" class="label">Cantidad</label>
+                                {{ form.loanAmount }}
+                            </div>
+                            <div class="campo">
+                                <label for="id_workerDni" class="label">DNI trajador</label>
+                                {{ form.workerDni }}
+                            </div>
+                        </div>
+        
+                        <div class="fila-form">
+                            <div class="campo">
+                                <label for="id_worker" class="label">Trabajador</label>
+                                {{ form.worker }}
+                            </div>
+                            <div class="campo">
+                                <label for="id_workerPosition" class="label">Cargo</label>
+                                {{ form.workerPosition }}
+                            </div>
+                        </div>
+        
+                        <div class="campo-botones">
+                            <button class="form-btn aceptar-btn" type="submit">Agregar</button>
+                            <button class="form-btn cancelar-btn" type="button" onclick="location.href='{% url 'home' %}'">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="tabla-creacion" id="added-ppe-table-container">
+                    <h2 class="titulo-primario">EPPs en base de datos</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Cantidad</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ppe in ppes %}
+                            <tr>
+                                <td>{{ ppe.name }}</td>
+                                <td>{{ ppe.quantity }}</td>
+                                <td>
+                                    <button class="add-to-pre-delivery" data-ppe-id="{{ ppe.id }}" data-ppe-name="{{ ppe.name }}" data-ppe-quantity="1">Añadir</button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3">No hay EPPs disponibles.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="tabla-creacion" id="view-given-ppe-table-container">
+
+            </div>
+            <button id="give-btn">Entregar</button>
+            <button id="volver-btn">Salir</button>
+        </div>
+    </section>
+</section>
+<div id="popup" style="display: none;">
+    <h3>Confirmar entrega de EPPs</h3>
+    <table id="popup-table">
+        <thead>
+            <tr>
+                <th>Nombre del EPP</th>
+                <th>Cantidad</th>
+                <th>Renovación</th>
+                <th>Fecha de Renovación</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Filas de EPPs se agregarán aquí dinámicamente -->
+        </tbody>
+    </table>
+    <button id="confirm-btn">Confirmar</button>
+    <button id="cancel-btn">Cancelar</button>
+</div>
+{% endblock %}

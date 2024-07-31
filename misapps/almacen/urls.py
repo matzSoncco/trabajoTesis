@@ -6,6 +6,8 @@ from . import views
 
 urlpatterns = [
     path('', home, name='home'),
+
+    #EPP
     path('ppe/create/', views.create_ppe, name='create_ppe'),
     path('get_ppe_data/', views.get_ppe_data, name='get_ppe_data'),
     path('save_all_ppe/', views.save_all_ppe, name='save_all_ppe'),
@@ -23,34 +25,53 @@ urlpatterns = [
     path('ppe/modify/<str:id>/', views.modify_ppe, name='modify_ppe'),
     path('ppe/delete/<str:id>/', views.delete_ppe, name='delete_ppe'),
     path('ppe/total_ppe_stock/', views.total_ppe_stock, name='total_ppe_stock'),
+
+    #EQUIPOS
     path('equipment/', views.equipment_list, name='equipment_list'),
     path('equipment/delete/<str:id>/', views.delete_equipment, name='delete_equipment'),
     path('equipment/modify/<str:id>/', views.modify_equipment, name='modify_equipment'),
     path('equipment/create/', views.create_equipment, name='create_equipment'),
     path('equipment/total_equipment_stock/', views.total_equipment_stock, name='total_equipment_stock'),
+
+    #MATERIALES
     path('material/', views.material_list, name='material_list'),
     path('material/create/', views.create_material, name='create_material'),
     path('materials/modify/<str:id>/', views.modify_material, name='modify_material'),
     path('materials/delete/<str:id>/', views.delete_material, name='delete_material'),
     path('materials/total_material_stock/', views.total_material_stock, name='total_material_stock'),
+
+    #HERRAMIENTAS
     path('tool/', views.tool_list, name='tool_list'),
     path('tool/create/', views.create_tool, name='create_tool'),
     path('tool/delete/<str:id>/', views.delete_tool, name='delete_tool'),
     path('tool/modify/<str:id>/', views.modify_tool, name='modify_tool'),
     path('tool/total_tool_stock/', views.total_tool_stock, name='total_tool_list'),
+
+    #TRABAJADORES
     path('worker/', views.worker_list, name='worker_list'),
     path('worker/create/', views.create_worker, name='create_worker'),
     path('worker/delete/<int:id>/', views.delete_worker, name='delete_worker'),
     path('worker/modify/<int:id>/', views.modify_worker, name='modify_worker'),
+
+    #ASIGNACIONES
     path('loan/', views.loan_list, name='loan_list'),
-    path('loan/create/', views.create_loan, name='create_loan'),
+    path('loan/create/', views.add_loan, name='add_loan'),
     path('loan/delete/<int:id>/', views.delete_loan, name='delete_loan'),
     path('loan/modify/<int:id>/', views.modify_loan, name='modify_loan'),
+
+    #ASIGNACIONES DE EPP
     path('ppeloan/', views.ppe_loan_list, name='ppe_loan_list'),
-    path('ppeloan/create/', views.create_ppe_loan, name='create_ppe_loan'),
-    path('ppeloan/create/exception/', views.exception_ppe_loan, name='exception_ppe_loan'),
+    path('add_ppe_loan/', views.add_ppe_loan, name='add_ppe_loan'),
+    path('check-ppe-availability/', views.check_ppe_availability, name='check_ppe_availability'),
+    path('worker_autocomplete/', views.worker_autocomplete, name='worker_autocomplete'),
+    path('dni_autocomplete/', views.dni_autocomplete, name='dni_autocomplete'),
+    path('worker-details/', views.worker_details, name='worker_details'),
+    path('load_given_ppe/', views.load_given_ppe, name='load_given_ppe'),
+    path('confirm_ppe_loan/', views.confirm_ppe_loan, name='confirm_ppe_loan'),
     path('ppeloan/delete/<int:id>/', views.delete_ppe_loan, name='delete_ppe_loan'),
     path('ppeloan/modify/<int:id>/', views.modify_ppe_loan, name='modify_ppe_loan'),
+
+    #USUARIOS
     path('register_admin/', register_admin, name='register_admin'),
     path('admin_list/', views.user_list, name='table_user'),
     path('login/', login, name='login'),

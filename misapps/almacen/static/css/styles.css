@@ -211,7 +211,7 @@ header {
 /* Sección superior del formulario */
 .top-form {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     margin-bottom: 20px;
 }
@@ -241,7 +241,8 @@ header {
 .centrado {
     margin: 0 auto;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
+    align-items: center;
 }
 
 .formulario-contenedor-individual {

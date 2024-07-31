@@ -15,13 +15,13 @@ from django.db.models import Sum
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from .models.Ppe import Ppe
-from .models.PpeLoan import PpeLoan, PpeLoanDetail
+from .models.PpeLoan import PpeLoan
 from .models.Equipment import Equipment
 from .models.Worker import Worker
 from .models.Material import Material
 from .models.Loan import Loan
 from .models.Tool import Tool
-from .forms import AdminSignUpForm, PpeForm, MaterialForm, WorkerForm, EquipmentForm, ToolForm, LoanForm, PpeLoanForm, Ppe, ExceptionPpeLoanForm, PpeLoanDetailForm, PpeLoanDetailForm, CreatePpeForm, CreateMaterialForm
+from .forms import AdminSignUpForm, PpeForm, MaterialForm, WorkerForm, EquipmentForm, ToolForm, LoanForm, PpeLoanForm, Ppe, CreatePpeForm, CreateMaterialForm, CreateEquipentForm, CreateToolForm
 
 logger = logging.getLogger(__name__)
 
@@ -169,7 +169,7 @@ def create_ppe(request):
         form = CreatePpeForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
-            messages.success(request, 'EPP guardado exitosamente.')
+            messages.success(request, 'EPP creado exitosamente.')
             return redirect('create_ppe')
         else:
             print("Form is not valid")
@@ -245,12 +245,12 @@ def total_cost_equip(request):
 @login_required
 def create_equipment(request):
     if request.method == 'POST':
-        form = EquipmentForm(request.POST)
+        form = CreateEquipentForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('equipment_list')
+            return redirect('create_equipment')
     else:
-        form = EquipmentForm()
+        form = CreateEquipentForm()
     return render(request, 'create_equipment.html', {'form': form})
 
 @login_required
@@ -292,12 +292,19 @@ def material_list(request):
         materials = Material.objects.all()
     return render(request, 'material_list.html', {'materials': materials, 'query': query})
 
+@login_required
 def create_material(request):
     if request.method == 'POST':
         form = CreateMaterialForm(request.POST, request.FILES)
         if form.is_valid():
-            ppe = form.save()
-            return redirect('create_ppe')
+            material = form.save()
+            print(f"Material creado: {material.idMaterial}")
+            print(f"Datos del POST: {request.POST}")
+            messages.success(request, 'Material creado exitosamente.')
+            return redirect('create_material')
+        else:
+            print("Formulario no válido")
+            print(form.errors)
     else:
         form = CreateMaterialForm()
     return render(request, 'create_material.html', {'form': form})
@@ -316,7 +323,7 @@ def total_cost_material(request):
     return render(request, 'total_mat_cost_table.html', {'materials': materials, 'query': query, 'total_cost_final': total_cost_final})
 
 @login_required
-def create_material(request):
+def add_material(request):
     if request.method == 'POST':
         form = MaterialForm(request.POST)
         if form.is_valid():
@@ -381,12 +388,16 @@ def total_cost_tool(request):
 @login_required
 def create_tool(request):
     if request.method == 'POST':
-        form = ToolForm(request.POST)
+        form = CreateToolForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
-            return redirect('tool_list')
+            messages.success(request, 'Herramienta creada exitosamente.')
+            return redirect('create_tool')
+        else:
+            print("Form is not valid")
+            print(form.errors)
     else:
-        form = ToolForm()
+        form = CreateToolForm()
     return render(request, 'create_tool.html', {'form': form})
 
 @login_required
@@ -478,15 +489,15 @@ def loan_list(request):
     return render(request, 'loan_list.html', {'loans': loans, 'query': query})
 
 @login_required
-def create_loan(request):
+def add_loan(request):
     if request.method == 'POST':
         form = LoanForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('loan_list')
+            return redirect('add_loan')
     else:
         form = LoanForm()
-    return render(request, 'create_loan.html', {'form': form})
+    return render(request, 'add_loan.html', {'form': form})
 
 @login_required
 def delete_loan(request, id):
@@ -524,43 +535,98 @@ def ppe_loan_list(request):
     return render(request, 'ppe_loan_list.html', {'ppe_loans': ppe_loans, 'query': query})
 
 @login_required
-def create_ppe_loan(request):
-    PpeLoanDetailFormSet = inlineformset_factory(PpeLoan, PpeLoanDetail, form=PpeLoanDetailForm, extra=1)
-
+def add_ppe_loan(request):
     if request.method == 'POST':
         form = PpeLoanForm(request.POST)
-        formset = PpeLoanDetailFormSet(request.POST, instance=form.instance)
-
-        if form.is_valid() and formset.is_valid():
-            ppe_loan = form.save()
-            formset.instance = ppe_loan
-            formset.save()
-
-            # Update stock
-            for form_detail in formset:
-                ppe = form_detail.cleaned_data.get('ppe')
-                quantity = form_detail.cleaned_data.get('quantity')
-                if ppe and quantity:  # Check if both ppe and quantity are provided
-                    ppe.stock -= quantity
-                    ppe.save()
-
-            return redirect('ppe_loan_list')
+        if form.is_valid():
+            ppe_loan = form.save(commit=False)
+            worker_name = form.cleaned_data['worker']
+            try:
+                worker = Worker.objects.get(name=worker_name)
+                ppe_loan.worker = worker
+                ppe_loan.save()
+                return redirect('some_success_url')
+            except Worker.DoesNotExist:
+                form.add_error('worker', 'Trabajador no encontrado')
     else:
         form = PpeLoanForm()
-        formset = PpeLoanDetailFormSet(instance=form.instance)
+    
+    # Obtener todos los objetos Ppe
+    ppes = Ppe.objects.all()
+    
+    context = {
+        'form': form,
+        'ppes': ppes
+    }
+    return render(request, 'add_ppe_loan.html', context)
 
-    return render(request, 'create_ppe_loan.html', {'form': form, 'formset': formset})
+def check_ppe_availability(request):
+    if request.method == 'GET':
+        ppe_name = request.GET.get('ppe_name')
+        try:
+            ppe = Ppe.objects.get(name=ppe_name)
+            return JsonResponse({'available': ppe.quantity})
+        except Ppe.DoesNotExist:
+            return JsonResponse({'error': 'EPP no encontrado'}, status=404)
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
 
-@login_required
-def exception_ppe_loan(request):
+def worker_autocomplete(request):
+    if 'term' in request.GET:
+        qs = Worker.objects.filter(name__icontains=request.GET.get('term'))
+        names = list(qs.values_list('name', flat=True))
+        return JsonResponse(names, safe=False)
+    return JsonResponse([], safe=False)
+
+def dni_autocomplete(request):
+    if 'term' in request.GET:
+        qs = Worker.objects.filter(dni__icontains=request.GET.get('term'))
+        dnis = list(qs.values_list('dni', flat=True))
+        return JsonResponse(dnis, safe=False)
+    return JsonResponse([], safe=False)
+
+def worker_details(request):
+    if 'worker_name' in request.GET:
+        worker = Worker.objects.get(name=request.GET.get('worker_name'))
+        return JsonResponse({
+            'name': worker.name,
+            'dni': worker.dni,
+            'position': worker.position
+        })
+    return JsonResponse({}, status=400)
+
+@csrf_exempt
+def confirm_ppe_loan(request):
     if request.method == 'POST':
-        form = ExceptionPpeLoanForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('ppe_loan_list')
-    else:
-        form = ExceptionPpeLoanForm()
-    return render(request, 'exception_ppe.html', {'form': form})
+        data = json.loads(request.body)
+        ppe_loans = data.get('ppe_loans', [])
+        
+        try:
+            for loan_data in ppe_loans:
+                worker = get_object_or_404(Worker, name=loan_data['worker'])
+                ppe = get_object_or_404(Ppe, name=loan_data['name'])
+                
+                PpeLoan.objects.create(
+                    worker=worker,
+                    ppe=ppe,
+                    loanAmount=loan_data['quantity'],
+                    workerPosition=loan_data['workerPosition'],
+                    workerDni=loan_data['workerDni'],
+                    loanDate=loan_data['loanDate']
+                )
+                
+                # Actualizar la cantidad de EPP disponible
+                ppe.quantity -= int(loan_data['quantity'])
+                ppe.save()
+                
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Método no permitido'})
+
+def load_given_ppe(request):
+    given_ppes = PpeLoan.objects.filter(confirmed=False)
+    return render(request, 'partials/given_ppe_table.html', {'given_ppes': given_ppes})
 
 @login_required
 def delete_ppe_loan(request, id):

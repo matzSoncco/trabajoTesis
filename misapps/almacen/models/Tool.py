@@ -7,6 +7,7 @@ class Tool(models.Model):
     idTool = models.CharField(verbose_name=_('ID'), primary_key=True, editable=False, max_length=10)
     name = models.CharField(verbose_name=_('Nombre'), null=False, max_length=20)
     quantity = models.IntegerField(verbose_name=_('Cantidad'), validators=[MinValueValidator(0)], null=False, default=0)
+    loanAmount = models.IntegerField(null=False, default=0)
     LEVELS = [
         (-1, 'Elija un nivel'),
         (1, 'Bajo'),

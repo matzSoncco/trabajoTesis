@@ -15,7 +15,7 @@
                     <a class="navbar-brand" href="{% url 'home' %}">Inicio</a>
                 </div>
                 <div class="item-lateral">
-                    <a class="navbar-brand" href="{% url 'home' %}">Personal Almacenero</a>
+                    <a class="navbar-brand" href="{% url 'table_user' %}">Personal Almacenero</a>
                 </div>
                 <div class="item-lateral">
                     <a class="navbar-brand" href="{% url 'worker_list' %}">Trabajadores</a>
@@ -38,40 +38,42 @@
                 <h2 class="titulo-primario">Creación de Equipos de Protección Personal</h2>
             </div>
             <div class="centrado">
-                <form method="post" action="{% url 'create_ppe' %}" enctype="multipart/form-data" class="box">
-                    {% csrf_token %}
-                    <div class="fila-form">
-                        <div class="campo">
-                            <label for="" class="label">Nombre</label>
-                            {{ form.name }}
+                <div class="formulario-contenedor-individual">
+                    <form method="post" action="{% url 'create_ppe' %}" enctype="multipart/form-data" class="box">
+                        {% csrf_token %}
+                        <div class="fila-form">
+                            <div class="campo">
+                                <label for="" class="label">Nombre</label>
+                                {{ form.name }}
+                            </div>
                         </div>
-                    </div>
-    
-                    <div class="fila-form">
-                        <div class="campo">
-                            <label for="" class="label">Unidad</label>
-                            {{ form.unit }}
+        
+                        <div class="fila-form">
+                            <div class="campo">
+                                <label for="" class="label">Unidad</label>
+                                {{ form.unit }}
+                            </div>
+                            <div class="campo">
+                                <label for="" class="label">Agregar nueva unidad</label>
+                                {{ form.new_unit }}
+                            </div>
+                            <div class="campo">
+                                <label for="" class="label">Agregar nueva unidad</label>
+                                <button type="button" onclick="addNewUnit()">Agregar</button>
+                            </div>
                         </div>
+        
                         <div class="campo">
-                            <label for="" class="label">Agregar nueva unidad</label>
-                            {{ form.new_unit }}
+                            <label for="" class="label">Imágen</label>
+                            {{ form.image }}
                         </div>
-                        <div class="campo">
-                            <label for="" class="label">Agregar nueva unidad</label>
-                            <button type="button" onclick="addNewUnit()">Agregar</button>
+        
+                        <div class="campo-botones">
+                            <button class="form-btn aceptar-btn" type="submit">Crear EPP</button>
+                            <button class="form-btn cancelar-btn" type="button" onclick="location.href='{% url 'home' %}'">Cancelar</button>
                         </div>
-                    </div>
-    
-                    <div class="campo">
-                        <label for="" class="label">Imágen</label>
-                        {{ form.image }}
-                    </div>
-    
-                    <div class="campo-botones">
-                        <button class="form-btn aceptar-btn" type="submit">Crear EPP</button>
-                        <button class="form-btn cancelar-btn" type="button" onclick="location.href='{% url 'home' %}'">Cancelar</button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     </section>
