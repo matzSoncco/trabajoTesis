@@ -22,12 +22,16 @@
 <script>
     $(document).ready(function() {
         console.log('Documento listo');
+
         // Función para cargar la tabla de EPPs añadidos
         function loadDurationPpe() {
             $.ajax({
                 url: "{% url 'table_duration_ppe' %}",
                 success: function(data) {
                     $('#duration-table-container').html(data);
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error de AJAX al cargar la tabla:", status, error);
                 }
             });
         }
@@ -35,17 +39,47 @@
         // Cargar las tablas al cargar la página
         loadDurationPpe();
 
-        // Manejar el formulario de búsqueda para la tabla de EPPs creados
-        $('#search-form').submit(function(event) {
-            event.preventDefault();
-            var query = $('input[name="q"]').val();
+        // Manejar el evento click para todos los botones de guardar duración
+        $(document).on('click', '.save-duration-btn', function(e) {
+            e.preventDefault(); // Prevenir cualquier acción por defecto del botón
+            
+            console.log('Botón clickeado'); // Para verificar si el evento se está capturando
+            
+            var row = $(this).closest('tr');
+            var ppeId = row.data('ppe-id');
+            var newDuration = row.find('.editable-duration').text();
+            
+            console.log('PPE ID:', ppeId);
+            console.log('Nueva duración:', newDuration);
+
             $.ajax({
-                url: "{% url 'table_duration_ppe' %}",
-                data: { q: query },
-                success: function(data) {
-                    $('#duration-table-container').html(data);
+                url: "{% url 'update_ppe_duration' %}",
+                method: 'POST',
+                data: {
+                    'ppe_id': ppeId,
+                    'duration': newDuration,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    console.log("Respuesta del servidor:", response);
+                    if (response.success) {
+                        alert('Duración actualizada con éxito');
+                    } else {
+                        alert('Error al actualizar la duración: ' + (response.error || 'Error desconocido'));
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error de AJAX:", status, error);
+                    alert('Error de conexión: ' + error);
                 }
             });
+        });
+
+        // Opcional: resaltar la celda cuando se está editando
+        $(document).on('focus', '.editable-duration', function() {
+            $(this).addClass('editing');
+        }).on('blur', '.editable-duration', function() {
+            $(this).removeClass('editing');
         });
     });
 </script>
@@ -77,7 +111,7 @@
             <h2>Tabla de duracion de EPP</h2>
         </div>
         <div class="tabla-creacion" id="duration-table-container">
-                    
+            <!-- Aquí se cargará la tabla de duración de EPPs -->
         </div>
     </section>
 </section>

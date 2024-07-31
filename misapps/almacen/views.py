@@ -69,20 +69,6 @@ def cost_summary_view(request):
 
     return render(request, 'total_cost_table.html', context)
 
-@require_POST
-def update_ppe_duration(request):
-    ppe_id = request.POST.get('ppe_id')
-    new_duration = request.POST.get('duration')
-    
-    ppe = Ppe.objects.get(idPpe=ppe_id)
-    logger.info(f"PPE encontrado: {ppe}")
-    
-    ppe.duration = new_duration
-    ppe.save()
-    
-    logger.info(f"PPE actualizado: {ppe}")
-    return JsonResponse({'success': True})
-    
 @login_required
 def show_duration(request):
     query = request.GET.get('q', '')
@@ -91,6 +77,17 @@ def show_duration(request):
     else:
         epp = Ppe.objects.all()
     return render(request, 'table_duration_ppe.html', {'epp': epp, 'query': query})
+
+@require_POST
+def update_ppe_duration(request):
+    ppe_id = request.POST.get('ppe_id')
+    new_duration = request.POST.get('duration')
+    
+    ppe = get_object_or_404(Ppe, idPpe=ppe_id)
+    ppe.duration = new_duration
+    ppe.save()
+    
+    return JsonResponse({'success': True})
 
 #PPE
 @login_required
