@@ -206,7 +206,7 @@ def create_ppe(request):
 
             History.objects.create(
                 content_type=ContentType.objects.get_for_model(ppe),
-                object_name=str(ppe),
+                object_name=ppe.name,
                 action='Created',
                 user=request.user,
                 timestamp=timezone.now()
