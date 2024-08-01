@@ -27,7 +27,7 @@ from .models.Material import Material
 from .models.Loan import Loan
 from .models.Tool import Tool
 from .models.History import History
-from .forms import AdminSignUpForm, PpeForm, MaterialForm, WorkerForm, EquipmentForm, ToolForm, LoanForm, PpeLoanForm, Ppe, ExceptionPpeLoanForm, PpeLoanDetailForm, PpeLoanDetailForm, CreatePpeForm, CreateMaterialForm
+from .forms import AdminSignUpForm, PpeForm, MaterialForm, WorkerForm, EquipmentForm, ToolForm, LoanForm, PpeLoanForm, Ppe, ExceptionPpeLoanForm, PpeLoanDetailForm, PpeLoanDetailForm, CreatePpeForm, CreateMaterialForm, CreateToolForm
 
 logger = logging.getLogger(__name__)
 
@@ -402,12 +402,16 @@ def total_cost_tool(request):
 @login_required
 def create_tool(request):
     if request.method == 'POST':
-        form = ToolForm(request.POST)
+        form = CreateToolForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
-            return redirect('tool_list')
+            messages.success(request, 'Herramienta guardada exitosamente.')
+            return redirect('create_tool')
+        else:
+            print("Form is not valid")
+            print(form.errors)
     else:
-        form = ToolForm()
+        form = CreateToolForm()
     return render(request, 'create_tool.html', {'form': form})
 
 @login_required

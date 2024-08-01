@@ -323,6 +323,27 @@ class ToolForm(forms.ModelForm):
         super(ToolForm, self).__init__(*args, **kwargs)
         self.fields['image'].required = False
 
+class CreateToolForm(forms.ModelForm):
+    name = forms.CharField(widget=forms.TextInput(attrs={
+        "class": "input",
+        "type": "text",
+        "placeholder": "Ingrese el nombre de la herramienta"
+    }))
+
+    class Meta:
+        model = Tool
+        fields = ['name', 'image']
+        widgets = {
+            'image': forms.FileInput(attrs={
+                "class": "input",
+                "type": "file",
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['image'].required = False
+
 class WorkerForm(forms.ModelForm):
     dni = forms.CharField(widget=forms.TextInput(attrs={
         "class": "input",
