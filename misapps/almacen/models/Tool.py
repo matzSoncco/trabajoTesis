@@ -14,38 +14,29 @@ class Tool(models.Model):
         (2, 'Medio'),
         (3, 'Mayor')
     ]
-    level = models.IntegerField(verbose_name=_('Nivel'), null=False, choices=LEVELS, default=-1)
+    level = models.IntegerField(verbose_name=_('Nivel'), null=False, choices=LEVELS, default=1)  # Default to a valid level
     stock = models.IntegerField(null=False, default=0)
     guideNumber = models.IntegerField(verbose_name=_('Número de Guía'), null=False, default=0)
     image = models.ImageField(upload_to='uploads/', blank=True, null=True)
-    creationDate = models.DateField(auto_now_add=False, blank=False, null=False)
     unitCost = models.DecimalField(default=0.0, null=False, max_digits=8, decimal_places=2)
     totalCost = models.DecimalField(default=0.0, null=False, max_digits=10, decimal_places=2, editable=False)
 
-    def get_level_display(self):
-        return dict(self.LEVELS).get(self.level, 'Desconocido')
-    
     def clean(self):
         if self.level == -1:
             raise ValidationError(_('Debe seleccionar un nivel válido.'))
-    
+
     def save(self, *args, **kwargs):
         self.totalCost = self.unitCost * self.quantity
         if not self.idTool or not self.idTool.startswith('H-'):
-            # Obtiene el número autoincrementable
             last_id = Tool.objects.all().order_by('-idTool').first()
             if last_id:
-                # Intenta obtener el número del último idTool
                 try:
                     last_id_number = int(last_id.idTool.split('-')[1]) + 1
                 except IndexError:
-                    # Si hay un IndexError, asigna 1 como el siguiente número
                     last_id_number = 1
             else:
                 last_id_number = 1
-            
-            self.idTool = f'H-{last_id_number:04}'  # '04' asegura que siempre tenga 4 dígitos
-        
+            self.idTool = f'H-{last_id_number:04}'
         super(Tool, self).save(*args, **kwargs)
 
     def __str__(self):

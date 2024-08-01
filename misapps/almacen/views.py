@@ -5,10 +5,8 @@ from django.contrib import messages
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
-from django.forms import inlineformset_factory
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
-from django.conf import settings
 from django.db import IntegrityError, models
 from datetime import datetime
 import json
@@ -26,7 +24,7 @@ from .models.Material import Material
 from .models.Loan import Loan
 from .models.Tool import Tool
 from .models.History import History
-from .forms import AdminSignUpForm, PpeForm, MaterialForm, WorkerForm, EquipmentForm, ToolForm, LoanForm, PpeLoanForm, Ppe, CreatePpeForm, CreateMaterialForm, CreateEquipentForm, CreateToolForm
+from .forms import AdminSignUpForm, PpeForm, MaterialForm, WorkerForm, EquipmentForm, ToolForm, LoanForm, PpeLoanForm, Ppe, CreatePpeForm, CreateMaterialForm, CreateToolForm, CreateEquipentForm
 
 logger = logging.getLogger(__name__)
 
@@ -411,7 +409,7 @@ def create_tool(request):
         form = CreateToolForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Herramienta creada exitosamente.')
+            messages.success(request, 'Herramienta guardada exitosamente.')
             return redirect('create_tool')
         else:
             print("Form is not valid")
