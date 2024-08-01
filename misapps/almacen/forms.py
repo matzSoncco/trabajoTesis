@@ -2,7 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .models.Ppe import Ppe
-from .models.PpeLoan import PpeLoan, PpeLoanDetail
+from .models.PpeLoan import PpeLoan
 from .models.Equipment import Equipment
 from .models.Material import Material
 from .models.Tool import Tool
@@ -87,7 +87,9 @@ class CreatePpeForm(forms.ModelForm):
         "placeholder": "Ingrese el nombre del EPP"
     }))
 
-    new_unit = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Nueva unidad'}))
+    new_unit = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        'placeholder': 'Nueva unidad'
+    }))
 
     class Meta:
         model = Ppe
@@ -187,6 +189,27 @@ class PpeForm(forms.ModelForm):
 
         return cleaned_data
 
+class CreateEquipentForm(forms.ModelForm):
+    name = forms.CharField(widget=forms.TextInput(attrs={
+        "class": "input",
+        "type": "text",
+        "placeholder": "Ingrese el nombre del Equipo"
+    }))
+
+    serialNumber = forms.IntegerField(widget=forms.NumberInput(attrs={
+        "class": "input",
+        "type": "number",
+        "placeholder": "Ingrese el número de serie"
+    }))
+    class Meta:
+        model = Equipment
+        fields = ['name', 'serialNumber', 'image']
+        widgets = {
+            'image': forms.FileInput(attrs={
+                "class": "input",
+                "type": "file",
+            }),
+        }
 class EquipmentForm(forms.ModelForm):
     level = forms.ChoiceField(widget=forms.Select(attrs={
         "class": "input",
@@ -225,7 +248,7 @@ class CreateMaterialForm(forms.ModelForm):
     name = forms.CharField(widget=forms.TextInput(attrs={
         "class": "input",
         "type": "text",
-        "placeholder": "Ingrese el nombre del material"
+        "placeholder": "Ingrese el nombre del Material"
     }))
 
     new_unit = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Nueva unidad'}))
@@ -266,7 +289,7 @@ class MaterialForm(forms.ModelForm):
             'name': forms.TextInput(attrs={
                 "class": "input",
                 "type": "text",
-                "placeholder": "Ingrese el nombre del material"
+                "placeholder": "Ingrese el nombre del Material"
             }),
             'stock': forms.NumberInput(attrs={
                 "class": "input",
@@ -287,6 +310,28 @@ class MaterialForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(MaterialForm, self).__init__(*args, **kwargs)
         self.fields['image'].required = False
+
+class CreateToolForm(forms.ModelForm):
+    name = forms.CharField(widget=forms.TextInput(attrs={
+        "class": "input",
+        "type": "text",
+        "placeholder": "Ingrese el nombre de la Herramienta"
+    }))
+
+    serialNumber = forms.IntegerField(widget=forms.NumberInput(attrs={
+        "class": "input",
+        "type": "number",
+        "placeholder": "Ingrese el número de serie"
+    }))
+    class Meta:
+        model = Tool
+        fields = ['name', 'serialNumber', 'image']
+        widgets = {
+            'image': forms.FileInput(attrs={
+                "class": "input",
+                "type": "file",
+            }),
+        }
 
 class ToolForm(forms.ModelForm):
     level = forms.ChoiceField(widget=forms.Select(attrs={
@@ -462,65 +507,49 @@ class LoanForm(forms.ModelForm):
             return obj.name
         
 class PpeLoanForm(forms.ModelForm):
-    class Meta:
-        model = PpeLoan
-        fields = ['worker', 'loanDate', 'newLoanDate', 'manager', 'description']
+    ppe = forms.CharField(widget=forms.TextInput(attrs={
+        "class": "input",
+        "type": "text",
+        "placeholder": "",
+    }))
 
-    def clean(self):
-        cleaned_data = super().clean()
-        worker = cleaned_data.get('worker')
-        loan_date = cleaned_data.get('loanDate')
-        new_loan_date = cleaned_data.get('newLoanDate')
-    
-        if worker and loan_date and new_loan_date:
-            existing_ppe_loans = PpeLoan.objects.filter(
-                worker=worker,
-                loanDate__lte=new_loan_date,
-                newLoanDate__gte=loan_date 
-            ).exclude(pk=self.instance.pk).exists()
-            
-            if existing_ppe_loans:
-                self.existing_ppe_loans  = True
-                raise ValidationError(f'El trabajador ya tiene EPPs entregados durante este período.')
-        
-        return cleaned_data
-    
-    def _init_(self, *args, **kwargs):
-        super()._init_(*args, **kwargs)
-        self.fields['worker'].label_from_instance = self.label_from_instance
-        
-    
-    def label_from_instance(self, obj):
-        if isinstance(obj, Worker):
-            return f"{obj.name} {obj.surname}"
-        else:
-            return obj.name
-        
-class PpeLoanDetailForm(forms.ModelForm):
-    class Meta:
-        model = PpeLoanDetail
-        fields = ['ppe', 'quantity']
+    loanDate = forms.DateField(widget=forms.DateInput(attrs={
+        "class": "input",
+        "type": "date",
+    }))
 
-class ExceptionPpeLoanForm(forms.ModelForm):
-    ppe = forms.ModelChoiceField(label='EPP', queryset=Ppe.objects.all(), required=True)
-    worker = forms.ModelChoiceField(label='Trabajador', queryset=Worker.objects.all(), required=True)
+    loanAmount = forms.IntegerField(widget=forms.NumberInput(attrs={
+        "class": "input",
+        "type": "number",
+        "placeholder": "Cantidad a asignar"
+    }))
+
+    worker = forms.CharField(widget=forms.TextInput(attrs={
+        "class": "input",
+        "type": "text",
+        "placeholder": "Nombre del trabajador",
+    }))
+
+    workerPosition = forms.CharField(widget=forms.TextInput(attrs={
+        "class": "input",
+        "type": "text",
+        "placeholder": "Posición del trabajador",
+        "readonly": "readonly",
+    }))
+
+    workerDni = forms.CharField(widget=forms.TextInput(attrs={
+        "class": "input",
+        "type": "text",
+        "placeholder": "DNI del trabajador",
+    }))
 
     class Meta:
         model = PpeLoan
-        fields = ['loanDate', 'newLoanDate', 'worker', 'ppe', 'manager', 'description']
+        fields = ['ppe' , 'loanDate', 'loanAmount', 'worker', 'workerPosition', 'workerDni']
 
-        widgets = {
-            'loanDate': forms.DateInput(attrs={'type': 'date'}),
-            'newLoanDate': forms.DateInput(attrs={'type': 'date'}),
-        }
-    
-    def _init_(self, *args, **kwargs):
-        super()._init_(*args, **kwargs)
-        self.fields['worker'].label_from_instance = self.label_from_instance
-        self.fields['ppe'].label_from_instance = self.label_from_instance
-    
-    def label_from_instance(self, obj):
-        if isinstance(obj, Worker):
-            return f"{obj.name} {obj.surname}"
-        else:
-            return obj.name
+        def clean_worker(self):
+            worker_name = self.cleaned_data['worker']
+            try:
+                return Worker.objects.get(name=worker_name)
+            except Worker.DoesNotExist:
+                raise forms.ValidationError("Trabajador no encontrado")

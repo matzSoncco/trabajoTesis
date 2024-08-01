@@ -1,16 +1,11 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.core.validators import MinValueValidator, MaxValueValidator
 from .Unit import Unit
 
 class Ppe(models.Model):
     idPpe = models.CharField(primary_key=True, editable=False, max_length=10)
     name = models.CharField(null=False, max_length=20, unique=True)
-    quantity = models.IntegerField(
-        validators=[MinValueValidator(0), MaxValueValidator(99999)],
-        null=False,
-        default=0
-    )
+    quantity = models.IntegerField(null=False, default=0)
     unitCost = models.DecimalField(default=0.0, null=False, max_digits=8, decimal_places=2)
     totalCost = models.DecimalField(default=0.0, null=False, max_digits=10, decimal_places=2, editable=False)
     guideNumber = models.IntegerField(null=False, default=0)
@@ -18,6 +13,7 @@ class Ppe(models.Model):
     unit = models.ForeignKey(Unit, on_delete=models.SET_NULL, null=True)
     duration = models.IntegerField(null=False, default=0, editable=True)
     image = models.ImageField(upload_to='uploads/', blank=True, null=True)
+    serialNumber = models.IntegerField(verbose_name=_('Stock'), null=False, default=0)
     creationDate = models.DateField(auto_now_add=False, blank=False, null=True)
 
     def save(self, *args, **kwargs):
