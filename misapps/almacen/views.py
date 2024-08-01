@@ -24,12 +24,8 @@ from .models.Material import Material
 from .models.Loan import Loan
 from .models.Tool import Tool
 from .models.History import History
-<<<<<<< HEAD
 from .models.Unit import Unit
 from .forms import AdminSignUpForm, PpeForm, MaterialForm, WorkerForm, EquipmentForm, ToolForm, LoanForm, PpeLoanForm, Ppe, CreatePpeForm, CreateMaterialForm, CreateEquipmentForm, CreateToolForm
-=======
-from .forms import AdminSignUpForm, PpeForm, MaterialForm, WorkerForm, EquipmentForm, ToolForm, LoanForm, PpeLoanForm, Ppe, CreatePpeForm, CreateMaterialForm, CreateToolForm, CreateEquipentForm
->>>>>>> 81d01ba93351f5fccfc1ef7b8bb5dce3f33b2234
 
 logger = logging.getLogger(__name__)
 
