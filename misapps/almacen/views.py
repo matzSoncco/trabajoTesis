@@ -7,7 +7,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
-from django.db import IntegrityError, models
+from django.views.decorators.http import require_GET, require_POST
+from django.db import transaction
+from django.utils import timezone
+from django.db.models import Q
+from datetime import datetime, timedelta
+from django.db import IntegrityError
 from datetime import datetime
 import json
 import logging
@@ -17,6 +22,7 @@ from django.db.models import Sum
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from .models.Ppe import Ppe
+from .models.PpeLoan import PpeLoan
 from .models.PpeLoan import PpeLoan
 from .models.Equipment import Equipment
 from .models.Worker import Worker
@@ -164,6 +170,214 @@ def show_added_ppe(request):
     print(f"Número de PPEs encontrados: {epp.count()}")  # Añade este print
     return render(request, 'table_added_ppe.html', {'epp': epp, 'query': query})
 
+@require_GET
+def check_ppe_availability(request):
+    ppe_name = request.GET.get('ppe_name')
+
+    try:
+        ppe = Ppe.objects.get(name=ppe_name)
+        quantity = ppe.quantity
+
+        can_assign = quantity > 0
+        message = '' if can_assign else 'No hay suficiente cantidad disponible.'
+
+        response = {
+            'can_assign': can_assign,
+            'available': quantity,
+            'message': message
+        }
+    except Ppe.DoesNotExist:
+        response = {
+            'can_assign': False,
+            'available': 0,
+            'message': 'EPP no encontrado.'
+        }
+
+    return JsonResponse(response)
+
+def check_ppe_duration(request):
+    ppe_name = request.GET.get('ppe_name')
+
+    try:
+        ppe = Ppe.objects.get(name=ppe_name)
+        response = {
+            'success': True,
+            'duration': ppe.duration
+        }
+    except Ppe.DoesNotExist:
+        response = {
+            'success': False,
+            'message': 'EPP no encontrado.'
+        }
+
+    return JsonResponse(response)
+
+@require_GET
+def check_ppe_loan_duration(request):
+    ppe_name = request.GET.get('ppe_name')
+    worker = request.GET.get('worker')
+    loan_date = request.GET.get('loan_date')
+
+    try:
+        ppe = Ppe.objects.get(name=ppe_name)
+        worker_obj = Worker.objects.get(name=worker)
+
+        loan_date = datetime.strptime(loan_date, '%Y-%m-%d').date()
+        expiration_date = loan_date + timedelta(days=ppe.duration)
+
+        active_loan = PpeLoan.objects.filter(
+            ppe=ppe,
+            worker=worker_obj,
+            loanDate__lte=expiration_date,
+            expirationDate__gte=loan_date
+        ).exists()
+
+        if active_loan:
+            response = {
+                'can_assign': False,
+                'message': 'Este trabajador ya tiene una asignación activa para este EPP.'
+            }
+    except Ppe.DoesNotExist:
+        response = {
+            'can_assign': False,
+            'message': 'EPP no encontrado.'
+        }
+    except Worker.DoesNotExist:
+        response = {
+            'can_assign': False,
+            'message': 'Trabajador no encontrado.'
+        }
+
+    return JsonResponse(response)
+    
+@require_GET
+def check_ppe_renewal(request):
+    ppe_name = request.GET.get('ppe_name')
+    worker_name = request.GET.get('worker')
+    loan_date = datetime.strptime(request.GET.get('loan_date'), '%Y-%m-%d').date()
+
+    try:
+        ppe = Ppe.objects.get(name=ppe_name)
+        worker = Worker.objects.get(name=worker_name)
+        
+        # Verifica si hay asignaciones activas
+        active_loan = PpeLoan.objects.filter(
+            ppe=ppe,
+            worker=worker,
+            loanDate__lte=loan_date,
+            expirationDate__gte=loan_date
+        ).first()
+
+        if active_loan:
+            # Hay una asignación activa
+            response = {
+                'can_assign': False,
+                'expiration_date': active_loan.expirationDate.isoformat(),
+                'message': 'Este trabajador ya tiene una asignación activa para este EPP.'
+            }
+        else:
+            # No hay asignación activa, pero verifica si ha pasado suficiente tiempo desde la última asignación
+            last_loan = PpeLoan.objects.filter(
+                ppe=ppe,
+                worker=worker,
+                loanDate__lt=loan_date
+            ).order_by('-loanDate').first()
+
+            if last_loan and (loan_date - last_loan.loanDate).days <= ppe.duration:
+                # No ha pasado suficiente tiempo desde la última asignación
+                response = {
+                    'can_assign': False,
+                    'expiration_date': (last_loan.loanDate + timedelta(days=ppe.duration)).isoformat(),
+                    'message': f'Debe esperar al menos {ppe.duration} días desde la última asignación.'
+                }
+            else:
+                # Se puede asignar normalmente
+                response = {
+                    'can_assign': True,
+                    'message': 'El EPP está disponible para asignar.'
+                }
+    except Ppe.DoesNotExist:
+        response = {
+            'can_assign': False,
+            'message': 'EPP no encontrado.'
+        }
+    except Worker.DoesNotExist:
+        response = {
+            'can_assign': False,
+            'message': 'Trabajador no encontrado.'
+        }
+    except Exception as e:
+        response = {
+            'can_assign': False,
+            'message': f'Error inesperado: {str(e)}'
+        }
+
+    return JsonResponse(response)
+    
+@transaction.atomic
+def confirm_ppe_loan(request):
+    data = json.loads(request.body)
+    ppe_loans = data.get('ppe_loans', [])
+
+    for loan in ppe_loans:
+        ppe_name = loan.get('name')
+        worker_name = loan.get('worker')
+        worker_position = loan.get('workerPosition')
+        worker_dni = loan.get('workerDni')
+        loan_date = datetime.strptime(loan.get('loanDate'), '%Y-%m-%d').date()
+        quantity = int(loan.get('quantity'))
+        is_renewal = loan.get('isRenewal', False)
+        is_exception = loan.get('isException', False)
+        new_expiration_date = datetime.strptime(loan.get('newExpirationDate'), '%Y-%m-%d').date()
+
+        try:
+            ppe = Ppe.objects.get(name=ppe_name)
+            worker = Worker.objects.get(name=worker_name)
+
+            # Verificar si ya existe un préstamo activo
+            active_loan = PpeLoan.objects.filter(
+                ppe=ppe,
+                worker=worker,
+                loanDate__lte=loan_date,
+                expirationDate__gte=loan_date
+            ).first()
+
+            if active_loan and not (is_renewal or is_exception):
+                return JsonResponse({
+                    'success': False, 
+                    'error': f'Ya existe un préstamo activo para {ppe_name} asignado a {worker_name}'
+                })
+
+            if ppe.quantity >= quantity:
+                if active_loan and (is_renewal or is_exception):
+                    # Actualizar el préstamo existente
+                    active_loan.expirationDate = new_expiration_date
+                    active_loan.save()
+                else:
+                    # Crear un nuevo préstamo
+                    new_loan = PpeLoan(
+                        worker=worker,
+                        workerPosition=worker_position,
+                        workerDni=worker_dni,
+                        loanDate=loan_date,
+                        expirationDate=new_expiration_date,
+                        loanAmount=quantity,
+                        ppe=ppe,
+                        confirmed=True
+                    )
+                    new_loan.save()
+                    ppe.quantity -= quantity
+                    ppe.save()
+            else:
+                return JsonResponse({'success': False, 'error': 'Cantidad insuficiente disponible'})
+
+        except Ppe.DoesNotExist:
+            return JsonResponse({'success': False, 'error': f'EPP {ppe_name} no encontrado'})
+        except Worker.DoesNotExist:
+            return JsonResponse({'success': False, 'error': f'Trabajador {worker_name} no encontrado'})
+
+    return JsonResponse({'success': True})
+    
 @login_required
 def create_ppe(request):
     if request.method == 'POST':
@@ -609,16 +823,6 @@ def add_ppe_loan(request):
         'ppes': ppes
     }
     return render(request, 'add_ppe_loan.html', context)
-
-def check_ppe_availability(request):
-    if request.method == 'GET':
-        ppe_name = request.GET.get('ppe_name')
-        try:
-            ppe = Ppe.objects.get(name=ppe_name)
-            return JsonResponse({'available': ppe.quantity})
-        except Ppe.DoesNotExist:
-            return JsonResponse({'error': 'EPP no encontrado'}, status=404)
-    return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 def worker_autocomplete(request):
     if 'term' in request.GET:
