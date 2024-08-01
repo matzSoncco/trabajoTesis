@@ -188,7 +188,7 @@ class PpeForm(forms.ModelForm):
             cleaned_data['unit'] = unit
 
         return cleaned_data
-
+    
 class CreateEquipmentForm(forms.ModelForm):
     name = forms.CharField(widget=forms.TextInput(attrs={
         "class": "input",
