@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import logout
+from django.utils import timezone
 from django.contrib import messages
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.decorators import login_required
@@ -191,18 +192,26 @@ def ppe_total(request):
 def create_ppe(request):
     if request.method == 'POST':
         form = CreatePpeForm(request.POST, request.FILES)
-        
-        # Guardar nueva unidad si se proporciona
+
         new_unit_name = request.POST.get('new_unit')
         if new_unit_name:
             unit, created = Unit.objects.get_or_create(name=new_unit_name)
-            # Reasignar el valor de la unidad en los datos POST para que el formulario lo valide correctamente
             post_data = request.POST.copy()
             post_data['unit'] = unit.id
             form = CreatePpeForm(post_data, request.FILES)
         
         if form.is_valid():
-            form.save()
+            ppe = form.save(commit=False)
+            ppe.save()
+
+            History.objects.create(
+                content_type=ContentType.objects.get_for_model(ppe),
+                object_name=str(ppe),
+                action='Created',
+                user=request.user,
+                timestamp=timezone.now()
+            )
+
             messages.success(request, 'EPP creado exitosamente.')
             return redirect('create_ppe')
         else:
@@ -241,32 +250,54 @@ def add_ppe(request):
 
 
 @login_required
-def delete_ppe(request, id):
-    epp = get_object_or_404(Ppe, idPpe=id)
-    
+def delete_ppe(request, ppe_name):
     if request.method == 'POST':
-        if 'confirm' in request.POST:
-            epp.delete()
-            messages.success(request, 'EPP eliminado exitosamente.')
-            return redirect('ppe_total')
-        elif 'cancel' in request.POST:
-            return redirect('ppe_total')
-    
-    return render(request, 'delete_ppe.html', {'epp': epp})
+        ppe = get_object_or_404(Ppe, name=ppe_name)
+        ppe.delete()
+        History.objects.create(
+            content_type=ContentType.objects.get_for_model(ppe),
+            object_name=ppe.name, 
+            action='Deleted',
+            user=request.user,
+            timestamp=timezone.now()
+        )
+        return redirect('ppe_total')
 
 @login_required
-def modify_ppe(request, id):
-    epp = get_object_or_404(Ppe, idPpe=id)
-    form = CreatePpeForm(instance=epp)
+def modify_ppe(request, name):
+    ppe = get_object_or_404(Ppe, name=name)
 
     if request.method == 'POST':
-        form = CreatePpeForm(request.POST, instance=epp)
+        form = CreatePpeForm(request.POST, request.FILES, instance=ppe)
+
+        new_unit_name = request.POST.get('new_unit')
+        if new_unit_name:
+            unit, created = Unit.objects.get_or_create(name=new_unit_name)
+            post_data = request.POST.copy()
+            post_data['unit'] = unit.id
+            form = CreatePpeForm(post_data, request.FILES, instance=ppe)
+        
         if form.is_valid():
-            form.instance.status = True
-            form.save()
-            return redirect('add_ppe')
+            ppe = form.save(commit=False)
+            ppe.save()
+
+            History.objects.create(
+                content_type=ContentType.objects.get_for_model(ppe),
+                object_name=ppe.name, 
+                action='Modified',
+                user=request.user,
+                timestamp=timezone.now()
+            )
+
+            messages.success(request, 'EPP modificado exitosamente.')
+            return redirect('ppe_total')
+        else:
+            print("Form is not valid")
+            print(form.errors)
     else:
-        return render(request, 'modify_ppe.html', {'form': form, 'id': id})
+        form = CreatePpeForm(instance=ppe)
+
+    return render(request, 'modify_ppe.html', {'form': form, 'ppe': ppe})
 
 @login_required 
 def total_ppe_stock(request):
@@ -326,10 +357,11 @@ def create_equipment(request):
         if form.is_valid():
             equipment = form.save()
             History.objects.create(
-                user=request.user,
-                action='create',
                 content_type=ContentType.objects.get_for_model(equipment),
-                object_id=equipment.idEquipment
+                object_name=equipment.name,
+                action='Created',
+                user=request.user,
+                timestamp=timezone.now()
             )
             messages.success(request, 'Equipo creado exitosamente.')
             return redirect('create_equipment')
@@ -341,40 +373,46 @@ def create_equipment(request):
     return render(request, 'create_equipment.html', {'form': form})
 
 @login_required
-def delete_equipment(request, id):
-    equipment = get_object_or_404(Equipment, idEquipment=id)
-    
+def delete_equipment(request, equipment_name):
     if request.method == 'POST':
+        equipment = get_object_or_404(Equipment, name=equipment_name)
         equipment.delete()
         History.objects.create(
-            user=request.user,
-            action='delete',
             content_type=ContentType.objects.get_for_model(equipment),
-            object_id=equipment.pk
+            object_name=equipment.name, 
+            action='Deleted',
+            user=request.user,
+            timestamp=timezone.now()
         )
-        return redirect('equipment_list')
-    else:
-        return render(request, 'delete_ppe.html', {'equipment': equipment})
+        return redirect('equipment_total')
 
 @login_required
-def modify_equipment(request, id):
-    equipment = get_object_or_404(Equipment, idEquipment=id)
-    form = EquipmentForm(instance=equipment)
-
+def modify_equipment(request, name):
+    equipment = get_object_or_404(Equipment, name=name)
     if request.method == 'POST':
-        form = EquipmentForm(request.POST, instance=equipment)
+        form = CreateEquipmentForm(request.POST, request.FILES, instance=equipment)
+        
         if form.is_valid():
-            form.instance.status = True
-            equipment = form.save()
+            equipment = form.save(commit=False)
+            equipment.save()
+
             History.objects.create(
-                user=request.user,
-                action='update',
                 content_type=ContentType.objects.get_for_model(equipment),
-                object_id=equipment.pk
+                object_name=equipment.name, 
+                action='Modified',
+                user=request.user,
+                timestamp=timezone.now()
             )
-            return redirect('equipment_list')
+
+            messages.success(request, 'Equipo modificado exitosamente.')
+            return redirect('equipment_total')
+        else:
+            print("Form is not valid")
+            print(form.errors)
     else:
-        return render(request, 'modify_equipment.html', {'form': form})
+        form = CreateEquipmentForm(instance=equipment)
+
+    return render(request, 'modify_equipment.html', {'form': form, 'equipment': equipment})
 
 login_required
 def total_equipment_stock(request):
@@ -419,6 +457,13 @@ def create_material(request):
         form = CreateMaterialForm(request.POST, request.FILES)
         if form.is_valid():
             material = form.save()
+            History.objects.create(
+                content_type=ContentType.objects.get_for_model(material),
+                object_name=material.name,
+                action='Created',
+                user=request.user,
+                timestamp=timezone.now()
+            )
             print(f"Material creado: {material.idMaterial}")
             print(f"Datos del POST: {request.POST}")
             messages.success(request, 'Material creado exitosamente.')
@@ -455,28 +500,54 @@ def add_material(request):
     return render(request, 'create_material.html', {'form': form})
 
 @login_required
-def delete_material(request, id):
-    material = get_object_or_404(Material, idMaterial=id)
-    
+def delete_material(request, material_name):
     if request.method == 'POST':
+        material = get_object_or_404(Ppe, name=material_name)
         material.delete()
-        return redirect('material_list')
-    else:
-        return render(request, 'delete_material.html', {'material': material})
+        History.objects.create(
+            content_type=ContentType.objects.get_for_model(material),
+            object_name=material.name, 
+            action='Deleted',
+            user=request.user,
+            timestamp=timezone.now()
+        )
+        return redirect('material_total')
 
 @login_required   
-def modify_material(request, id):
-    material = get_object_or_404(Material, idMaterial=id)
-    form = MaterialForm(instance=material)
+def modify_material(request, material_name):
+    material = get_object_or_404(Material, name=material_name)
 
     if request.method == 'POST':
-        form = MaterialForm(request.POST, instance=material)
+        form = CreateMaterialForm(request.POST, request.FILES, instance=material)
+
+        new_unit_name = request.POST.get('new_unit')
+        if new_unit_name:
+            unit, created = Unit.objects.get_or_create(name=new_unit_name)
+            post_data = request.POST.copy()
+            post_data['unit'] = unit.id
+            form = CreateMaterialForm(post_data, request.FILES, instance=material)
+        
         if form.is_valid():
-            form.instance.status = True
-            form.save()
-            return redirect('material_list')
+            material = form.save(commit=False)
+            material.save()
+
+            History.objects.create(
+                content_type=ContentType.objects.get_for_model(material),
+                object_name=material.name, 
+                action='Modified',
+                user=request.user,
+                timestamp=timezone.now()
+            )
+
+            messages.success(request, 'Material modificado exitosamente.')
+            return redirect('material_total')
+        else:
+            print("Form is not valid")
+            print(form.errors)
     else:
-        return render(request, 'modify_material.html', {'form': form})
+        form = CreateMaterialForm(instance=material)
+
+    return render(request, 'modify_material.html', {'form': form, 'material': material})
 
 @login_required 
 def total_material_stock(request):
@@ -490,14 +561,14 @@ def tool_total(request):
     if request.method == 'POST':
         if 'delete' in request.POST:
             tool_id = request.POST.get('delete')
-            tool = get_object_or_404(Tool, id=tool_id)
+            tool = get_object_or_404(Tool, idTool=tool_id)
             tool.delete()
             messages.success(request, 'Herramienta eliminada exitosamente.')
             return redirect('tool_total')
 
         if 'edit' in request.POST:
             tool_id = request.POST.get('edit')
-            tool = get_object_or_404(Tool, id=tool_id)
+            tool = get_object_or_404(Tool, idTool=tool_id)
             form = CreateToolForm(request.POST, request.FILES, instance=tool)
             if form.is_valid():
                 form.save()
@@ -534,7 +605,14 @@ def create_tool(request):
     if request.method == 'POST':
         form = CreateToolForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
+            tool = form.save()
+            History.objects.create(
+                content_type=ContentType.objects.get_for_model(tool),
+                object_name=tool.name,
+                action='Created',
+                user=request.user,
+                timestamp=timezone.now()
+            )
             messages.success(request, 'Herramienta guardada exitosamente.')
             return redirect('create_tool')
         else:
@@ -545,28 +623,46 @@ def create_tool(request):
     return render(request, 'create_tool.html', {'form': form})
 
 @login_required
-def delete_tool(request, id):
-    tools = get_object_or_404(Tool, idTool=id)
-    
+def delete_tool(request, tool_name):
     if request.method == 'POST':
-        tools.delete()
-        return redirect('tool_list')
-    else:
-        return render(request, 'delete_ppe.html', {'tools': tools})
+        tool = get_object_or_404(Ppe, name=tool_name)
+        tool.delete()
+        History.objects.create(
+            content_type=ContentType.objects.get_for_model(tool),
+            object_name=tool.name, 
+            action='Deleted',
+            user=request.user,
+            timestamp=timezone.now()
+        )
+        return redirect('tool_total')
 
 @login_required
-def modify_tool(request, id):
-    tools = get_object_or_404(Tool, idTool=id)
-    form = ToolForm(instance=tools)
-
+def modify_tool(request, name):
+    tool = get_object_or_404(Tool, name=name)
     if request.method == 'POST':
-        form = ToolForm(request.POST, instance=tools)
+        form = CreateToolForm(request.POST, request.FILES, instance=tool)
+        
         if form.is_valid():
-            form.instance.status = True
-            form.save()
-            return redirect('tool_list')
+            tool = form.save(commit=False)
+            tool.save()
+
+            History.objects.create(
+                content_type=ContentType.objects.get_for_model(tool),
+                object_name=tool.name, 
+                action='Modified',
+                user=request.user,
+                timestamp=timezone.now()
+            )
+
+            messages.success(request, 'Herramienta modificado exitosamente.')
+            return redirect('tool_total')
+        else:
+            print("Form is not valid")
+            print(form.errors)
     else:
-        return render(request, 'modify_tool.html', {'form': form})
+        form = CreateToolForm(instance=tool)
+
+    return render(request, 'modify_tool.html', {'form': form, 'tool': tool})
 
 login_required
 def total_tool_stock(request):
@@ -592,6 +688,13 @@ def create_worker(request):
         form = WorkerForm(request.POST)
         if form.is_valid():
             worker = form.save()
+            History.objects.create(
+                content_type=ContentType.objects.get_for_model(worker),
+                object_name=worker.name,
+                action='Created',
+                user=request.user,
+                timestamp=timezone.now()
+            )
             return JsonResponse({'success': True, 'message': 'Trabajador creado con éxito'})
         else:
             return JsonResponse({'success': False, 'errors': form.errors})
