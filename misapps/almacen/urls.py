@@ -9,6 +9,7 @@ urlpatterns = [
 
     #EPP
     path('ppe/create/', views.create_ppe, name='create_ppe'),
+    path('ppe/total/', views.ppe_total, name='ppe_total'),
     path('add_new_unit/', views.add_new_unit, name='add_new_unit'),
     path('get_ppe_data/', views.get_ppe_data, name='get_ppe_data'),
     path('save_all_ppe/', views.save_all_ppe, name='save_all_ppe'),
@@ -24,7 +25,7 @@ urlpatterns = [
     path('ppe/add/', views.add_ppe, name='add_ppe'),
     path('ppe/add/table/', views.show_added_ppe, name='table_added_ppe'),
     path('ppe/modify/<str:id>/', views.modify_ppe, name='modify_ppe'),
-    path('ppe/delete/<str:id>/', views.delete_ppe, name='delete_ppe'),
+    path('ppe/delete/<int:id>/', views.delete_ppe, name='delete_ppe'),
     path('ppe/total_ppe_stock/', views.total_ppe_stock, name='total_ppe_stock'),
 
     #EQUIPOS
@@ -32,11 +33,13 @@ urlpatterns = [
     path('equipment/delete/<str:id>/', views.delete_equipment, name='delete_equipment'),
     path('equipment/modify/<str:id>/', views.modify_equipment, name='modify_equipment'),
     path('equipment/create/', views.create_equipment, name='create_equipment'),
+    path('equipment/total/', views.equipment_total, name='equipment_total'),
     path('equipment/total_equipment_stock/', views.total_equipment_stock, name='total_equipment_stock'),
 
     #MATERIALES
     path('material/', views.material_list, name='material_list'),
     path('material/create/', views.create_material, name='create_material'),
+    path('material/total/', views.material_total, name='material_total'),
     path('materials/modify/<str:id>/', views.modify_material, name='modify_material'),
     path('materials/delete/<str:id>/', views.delete_material, name='delete_material'),
     path('materials/total_material_stock/', views.total_material_stock, name='total_material_stock'),
@@ -44,6 +47,7 @@ urlpatterns = [
     #HERRAMIENTAS
     path('tool/', views.tool_list, name='tool_list'),
     path('tool/create/', views.create_tool, name='create_tool'),
+    path('tool/total/', views.tool_total, name='tool_total'),
     path('tool/delete/<str:id>/', views.delete_tool, name='delete_tool'),
     path('tool/modify/<str:id>/', views.modify_tool, name='modify_tool'),
     path('tool/total_tool_stock/', views.total_tool_stock, name='total_tool_list'),

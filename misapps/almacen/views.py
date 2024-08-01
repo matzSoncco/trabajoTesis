@@ -164,6 +164,29 @@ def show_added_ppe(request):
     print(f"Número de PPEs encontrados: {epp.count()}")  # Añade este print
     return render(request, 'table_added_ppe.html', {'epp': epp, 'query': query})
 
+def ppe_total(request):
+    ppes = Ppe.objects.all()  
+    
+    if request.method == 'POST':
+        if 'delete' in request.POST:
+            ppe_id = request.POST.get('delete')
+            ppe = get_object_or_404(Ppe, id=ppe_id)
+            ppe.delete()
+            messages.success(request, 'EPP eliminado exitosamente.')
+            return redirect('ppe_total')
+
+        if 'edit' in request.POST:
+            ppe_id = request.POST.get('edit')
+            ppe = get_object_or_404(Ppe, id=ppe_id)
+            form = CreatePpeForm(request.POST, request.FILES, instance=ppe)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'EPP actualizado exitosamente.')
+                return redirect('ppe_total')
+    
+    form = CreatePpeForm()  # Inicializa el formulario para crear o editar
+    return render(request, 'ppe_total.html', {'ppes': ppes, 'form': form})
+
 @login_required
 def create_ppe(request):
     if request.method == 'POST':
@@ -221,19 +244,23 @@ def add_ppe(request):
 def delete_ppe(request, id):
     epp = get_object_or_404(Ppe, idPpe=id)
     
-    if request.method == 'DELETE':
-        epp.delete()
-        return redirect('ppe')
-    else:
-        return render(request, 'delete_ppe.html', {'epp': epp})
+    if request.method == 'POST':
+        if 'confirm' in request.POST:
+            epp.delete()
+            messages.success(request, 'EPP eliminado exitosamente.')
+            return redirect('ppe_total')
+        elif 'cancel' in request.POST:
+            return redirect('ppe_total')
+    
+    return render(request, 'delete_ppe.html', {'epp': epp})
 
 @login_required
 def modify_ppe(request, id):
     epp = get_object_or_404(Ppe, idPpe=id)
-    form = PpeForm(instance=epp)
+    form = CreatePpeForm(instance=epp)
 
     if request.method == 'POST':
-        form = PpeForm(request.POST, instance=epp)
+        form = CreatePpeForm(request.POST, instance=epp)
         if form.is_valid():
             form.instance.status = True
             form.save()
@@ -247,6 +274,28 @@ def total_ppe_stock(request):
     return JsonResponse({'total_stock': total_stock})
 
 #EQUIMENT
+def equipment_total(request):
+    equipments = Equipment.objects.all()
+    
+    if request.method == 'POST':
+        if 'delete' in request.POST:
+            equipment_id = request.POST.get('delete')
+            equipment = get_object_or_404(Equipment, id=equipment_id)
+            equipment.delete()
+            messages.success(request, 'Equipo eliminado exitosamente.')
+            return redirect('equipment_total')
+
+        if 'edit' in request.POST:
+            equipment_id = request.POST.get('edit')
+            equipment = get_object_or_404(Equipment, id=equipment_id)
+            form = CreateEquipmentForm(request.POST, request.FILES, instance=equipment)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Equipo actualizado exitosamente.')
+                return redirect('equipment_total')
+    
+    form = CreateEquipmentForm()  # Inicializa el formulario para crear o editar
+    return render(request, 'equipment_total.html', {'equipments': equipments, 'form': form})
 @login_required
 def equipment_list(request):
     query = request.GET.get('q')
@@ -333,6 +382,28 @@ def total_equipment_stock(request):
     return JsonResponse({'total_stock': total_stock})
 
 #MATERIAL
+def material_total(request):
+    materials = Material.objects.all()
+    
+    if request.method == 'POST':
+        if 'delete' in request.POST:
+            material_id = request.POST.get('delete')
+            material = get_object_or_404(Material, id=material_id)
+            material.delete()
+            messages.success(request, 'Material eliminado exitosamente.')
+            return redirect('material_total')
+
+        if 'edit' in request.POST:
+            material_id = request.POST.get('edit')
+            material = get_object_or_404(Material, id=material_id)
+            form = CreateMaterialForm(request.POST, request.FILES, instance=material)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Material actualizado exitosamente.')
+                return redirect('material_total')
+    
+    form = CreateMaterialForm()  # Inicializa el formulario para crear o editar
+    return render(request, 'material_total.html', {'materials': materials, 'form': form})
 @login_required
 def material_list(request):
     query = request.GET.get('q')
@@ -413,6 +484,29 @@ def total_material_stock(request):
     return JsonResponse({'total_stock': total_stock})
 
 #TOOLS
+def tool_total(request):
+    tools = Tool.objects.all()  
+    
+    if request.method == 'POST':
+        if 'delete' in request.POST:
+            tool_id = request.POST.get('delete')
+            tool = get_object_or_404(Tool, id=tool_id)
+            tool.delete()
+            messages.success(request, 'Herramienta eliminada exitosamente.')
+            return redirect('tool_total')
+
+        if 'edit' in request.POST:
+            tool_id = request.POST.get('edit')
+            tool = get_object_or_404(Tool, id=tool_id)
+            form = CreateToolForm(request.POST, request.FILES, instance=tool)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Herramienta actualizada exitosamente.')
+                return redirect('tool_total')
+    
+    form = CreateToolForm()  # Inicializa el formulario para crear o editar
+    return render(request, 'tool_total.html', {'tools': tools, 'form': form})
+
 @login_required
 def tool_list(request):
     query = request.GET.get('q')

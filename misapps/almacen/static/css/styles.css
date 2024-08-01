@@ -511,3 +511,25 @@ a {
     color: white;
     transform: scale(1.05);
 }
+
+.centrado {
+    text-align: center;
+    margin-top: 20px; /* Ajusta según sea necesario */
+}
+
+.ver-obj-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 16px;
+    color: #fff;
+    background-color: #2c3e50;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.ver-obj-btn:hover {
+    background-color: #34495e; /* Un tono más claro para el hover */
+}
+
