@@ -43,28 +43,27 @@
                         {% csrf_token %}
                         <div class="fila-form">
                             <div class="campo">
-                                <label for="" class="label">Nombre</label>
+                                <label for="id_name" class="label">Nombre</label>
                                 {{ form.name }}
                             </div>
                         </div>
         
                         <div class="fila-form">
                             <div class="campo">
-                                <label for="" class="label">Unidad</label>
+                                <label for="id_unit" class="label">Unidad</label>
                                 {{ form.unit }}
                             </div>
                             <div class="campo">
-                                <label for="" class="label">Agregar nueva unidad</label>
+                                <label for="id_new_unit" class="label">Agregar nueva unidad</label>
                                 {{ form.new_unit }}
                             </div>
                             <div class="campo">
-                                <label for="" class="label">Agregar nueva unidad</label>
-                                <button type="button" onclick="addNewUnit()">Agregar</button>
+                                <button type="button" id="add-unit-btn">Agregar</button>
                             </div>
                         </div>
         
                         <div class="campo">
-                            <label for="" class="label">Imágen</label>
+                            <label for="id_image" class="label">Imágen</label>
                             {{ form.image }}
                         </div>
         
@@ -94,19 +93,38 @@
     </script>
 {% endif %}
 <script>
-    function addNewUnit() {
+    document.getElementById('add-unit-btn').addEventListener('click', function() {
         const newUnitField = document.getElementById('id_new_unit');
-        const unitSelect = document.querySelector('.select-unit');
+        const unitSelect = document.getElementById('id_unit');
         const newUnit = newUnitField.value.trim();
-    
+
         if (newUnit) {
-            const newOption = new Option(newUnit, newUnit, true, true);
-            unitSelect.add(newOption);
-            unitSelect.value = newUnit;
-            newUnitField.value = '';
-            
-            // Opcional: Puedes hacer una llamada AJAX aquí para crear la nueva unidad en el backend inmediatamente
+            fetch('{% url "add_new_unit" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ 'new_unit': newUnit })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const newOption = new Option(newUnit, newUnit, true, true);
+                    unitSelect.add(newOption);
+                    unitSelect.value = newUnit;
+                    newUnitField.value = '';
+                    document.querySelector('form').submit();  // Actualiza y envía el formulario automáticamente
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        } else {
+            alert('Por favor, ingresa un nombre de unidad.');
         }
-    }
+    });
 </script>
 {% endblock %}

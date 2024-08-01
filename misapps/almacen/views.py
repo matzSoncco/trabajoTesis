@@ -24,7 +24,8 @@ from .models.Material import Material
 from .models.Loan import Loan
 from .models.Tool import Tool
 from .models.History import History
-from .forms import AdminSignUpForm, PpeForm, MaterialForm, WorkerForm, EquipmentForm, ToolForm, LoanForm, PpeLoanForm, Ppe, CreatePpeForm, CreateMaterialForm, CreateToolForm, CreateEquipentForm
+from .models.Unit import Unit
+from .forms import AdminSignUpForm, PpeForm, MaterialForm, WorkerForm, EquipmentForm, ToolForm, LoanForm, PpeLoanForm, Ppe, CreatePpeForm, CreateMaterialForm, CreateEquipmentForm, CreateToolForm
 
 logger = logging.getLogger(__name__)
 
@@ -167,6 +168,16 @@ def show_added_ppe(request):
 def create_ppe(request):
     if request.method == 'POST':
         form = CreatePpeForm(request.POST, request.FILES)
+        
+        # Guardar nueva unidad si se proporciona
+        new_unit_name = request.POST.get('new_unit')
+        if new_unit_name:
+            unit, created = Unit.objects.get_or_create(name=new_unit_name)
+            # Reasignar el valor de la unidad en los datos POST para que el formulario lo valide correctamente
+            post_data = request.POST.copy()
+            post_data['unit'] = unit.id
+            form = CreatePpeForm(post_data, request.FILES)
+        
         if form.is_valid():
             form.save()
             messages.success(request, 'EPP creado exitosamente.')
@@ -177,6 +188,22 @@ def create_ppe(request):
     else:
         form = CreatePpeForm()
     return render(request, 'create_ppe.html', {'form': form})
+
+@csrf_exempt
+@require_POST
+def add_new_unit(request):
+    try:
+        data = json.loads(request.body)
+        new_unit_name = data.get('new_unit')
+        if new_unit_name:
+            unit, created = Unit.objects.get_or_create(name=new_unit_name)
+            if created:
+                return JsonResponse({'success': True, 'unit': unit.name})
+            else:
+                return JsonResponse({'success': False, 'message': 'La unidad ya existe.'})
+        return JsonResponse({'success': False, 'message': 'Nombre de la unidad no proporcionado.'})
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': 'Error al procesar la solicitud.'})
 
 @login_required
 def add_ppe(request):
@@ -245,18 +272,23 @@ def total_cost_equip(request):
 @login_required
 def create_equipment(request):
     if request.method == 'POST':
-        form = CreateEquipentForm(request.POST)
+        form = CreateEquipmentForm(request.POST, request.FILES)
+        
         if form.is_valid():
-            equipment=form.save()
+            equipment = form.save()
             History.objects.create(
                 user=request.user,
                 action='create',
                 content_type=ContentType.objects.get_for_model(equipment),
                 object_id=equipment.idEquipment
             )
-            return redirect('equipment_list')
+            messages.success(request, 'Equipo creado exitosamente.')
+            return redirect('create_equipment')
+        else:
+            print("Form is not valid")
+            print(form.errors)
     else:
-        form = CreateEquipentForm()
+        form = CreateEquipmentForm()
     return render(request, 'create_equipment.html', {'form': form})
 
 @login_required
