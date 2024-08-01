@@ -9,6 +9,7 @@ urlpatterns = [
 
     #EPP
     path('ppe/create/', views.create_ppe, name='create_ppe'),
+    path('add_new_unit/', views.add_new_unit, name='add_new_unit'),
     path('get_ppe_data/', views.get_ppe_data, name='get_ppe_data'),
     path('save_all_ppe/', views.save_all_ppe, name='save_all_ppe'),
     path('ppe/create/table/', views.PersonalProtectionEquipment, name='table_created_ppe'),

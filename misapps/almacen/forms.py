@@ -189,7 +189,7 @@ class PpeForm(forms.ModelForm):
 
         return cleaned_data
 
-class CreateEquipentForm(forms.ModelForm):
+class CreateEquipmentForm(forms.ModelForm):
     name = forms.CharField(widget=forms.TextInput(attrs={
         "class": "input",
         "type": "text",
@@ -201,15 +201,21 @@ class CreateEquipentForm(forms.ModelForm):
         "type": "number",
         "placeholder": "Ingrese el número de serie"
     }))
+    
+    level = forms.ChoiceField(choices=Equipment.LEVELS, widget=forms.Select(attrs={
+        "class": "input"
+    }))
+
     class Meta:
         model = Equipment
-        fields = ['name', 'serialNumber', 'image']
+        fields = ['name', 'serialNumber', 'image', 'level']
         widgets = {
             'image': forms.FileInput(attrs={
                 "class": "input",
                 "type": "file",
             }),
         }
+
 class EquipmentForm(forms.ModelForm):
     level = forms.ChoiceField(widget=forms.Select(attrs={
         "class": "input",
@@ -323,6 +329,7 @@ class CreateToolForm(forms.ModelForm):
         "type": "number",
         "placeholder": "Ingrese el número de serie"
     }))
+
     class Meta:
         model = Tool
         fields = ['name', 'serialNumber', 'image']
