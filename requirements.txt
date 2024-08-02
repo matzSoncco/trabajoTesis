@@ -4,7 +4,6 @@ django-extensions==3.2.3
 djangorestframework==3.15.2
 graphviz==0.20.3
 gunicorn==22.0.0
-mariadb==1.1.10
 packaging==24.1
 pillow==10.3.0
 pydotplus==2.0.2
