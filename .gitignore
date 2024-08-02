@@ -1,1 +1,32 @@
-_pycache_
+# Python
+*.py[cod]
+__pycache__/
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.pyc
+
+# Django
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+*.cover
+*.coverage
+*.coveragerc
+*.pyd
+*.pyo
+*.db
+*.sqlite3
+*.env
+.DS_Store
+.env
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
