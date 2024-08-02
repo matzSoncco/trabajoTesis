@@ -11,7 +11,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from django.db import transaction
 from django.utils import timezone
-from django.db.models import Q
 from datetime import datetime, timedelta
 from django.db import IntegrityError
 from datetime import datetime
@@ -420,7 +419,7 @@ def create_ppe(request):
 
             History.objects.create(
                 content_type=ContentType.objects.get_for_model(ppe),
-                object_name=str(ppe),
+                object_name=ppe.name,
                 action='Created',
                 user=request.user,
                 timestamp=timezone.now()
@@ -465,7 +464,7 @@ def add_ppe(request):
 
 @login_required
 def delete_ppe(request, ppe_name):
-    if request.method == 'POST':
+    if request.method == 'DELETE':
         ppe = get_object_or_404(Ppe, name=ppe_name)
         ppe.delete()
         History.objects.create(

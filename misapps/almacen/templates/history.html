@@ -26,84 +26,34 @@
             </nav>
         </div>
     </aside>
-    <section class="historial-section">
-        <h2>Historial</h2>
-        <table class="historial-table">
-            <thead>
-                <tr>
-                    <th>Usuario</th>
-                    <th>Acción</th>
-                    <th>Objeto</th>
-                    <th>Fecha y Hora</th>
-                    <th>Información Adicional</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for record in history_records %}
+    <section class="contendor-lateral-derecho">
+        <div class="titulo-pagina">
+            <h2>Tabla de historial de acciones</h2>
+        </div>
+        <div class="tabla-creacion" id="duration-table-container">
+            <table class="tabla">
+                <thead>
                     <tr>
-                        <td>{{ record.user }}</td>
-                        <td>{{ record.action }}</td>
-                        <td>{{ record.object_name }}</td>
-                        <td>{{ record.timestamp }}</td>
-                        <td>{{ record.additional_info }}</td>
+                        <th>Usuario</th>
+                        <th>Acción</th>
+                        <th>Objeto</th>
+                        <th>Fecha y Hora</th>
+                        <th>Información Adicional</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    {% for record in history_records %}
+                        <tr>
+                            <td>{{ record.user }}</td>
+                            <td>{{ record.action }}</td>
+                            <td>{{ record.object_name }}</td>
+                            <td>{{ record.timestamp }}</td>
+                            <td>{{ record.additional_info }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </section>
 </section>
-
-<style>
-    .historial-section {
-        padding: 20px;
-        background-color: #f9f9f9;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .historial-section h2 {
-        font-size: 24px;
-        margin-bottom: 20px;
-        color: #333;
-        text-align: center;
-    }
-
-    .historial-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 0 auto;
-    }
-
-    .historial-table th, .historial-table td {
-        padding: 12px 15px;
-        border: 1px solid #ddd;
-        text-align: left;
-    }
-
-    .historial-table th {
-        background-color: #2c3e50;
-        color: white;
-        font-weight: bold;
-    }
-
-    .historial-table tr:nth-child(even) {
-        background-color: #f2f2f2;
-    }
-
-    .historial-table tr:hover {
-        background-color: #ddd;
-    }
-
-    .historial-table td {
-        color: #555;
-    }
-
-    .historial-table th, .historial-table td {
-        text-align: center;
-    }
-
-    .historial-table tr:hover td {
-        color: #000;
-    }
-</style>
 {% endblock %}
